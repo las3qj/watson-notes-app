@@ -3,6 +3,7 @@ import React from 'react';
 import styles from '../styles/CreateNewPage.module.css';
 import NewNote from '../components/new-note.js';
 import TagPanel from '../components/tag-panel.js';
+import { caseInsensitiveSearch, specialCharacterParse } from '../util/string-parsing.js';
 import { resetServerContext } from 'react-beautiful-dnd';
 
 
@@ -22,7 +23,7 @@ class CreateNewPage extends React.Component{
     this.analyzeNote=this.analyzeNote.bind(this);
     this.pushNoteToDB=this.pushNoteToDB.bind(this);
     this.state= {
-      taginput: "",
+      tagInput: "",
       note: {
         _id: 0,
         input: "This is my note",
@@ -48,7 +49,7 @@ class CreateNewPage extends React.Component{
   handleTagInputChange(event){
     const newI = event.target.value;
     this.setState({
-      taginput: newI
+      tagInput: newI
     });
   }
 
@@ -197,42 +198,90 @@ class CreateNewPage extends React.Component{
     if(event.key !== "Enter"){
       return;
     }
-    const input = event.target.value;
-    const tag = {
-      _id: input,
-      children: [],
-      notes: [],
-      parent: null
-    }
+    const input = event.target.value.trim();
     var tagsTable = this.state.tagsTable;
+    var rootTags = this.state.rootTags.slice();
     var noteTags = this.state.note.tags.slice();
     var data = tagsTable[input];
     if(typeof data === 'undefined'){
-      var data2 = tagsTable[input.toLowerCase()];
-      if(typeof data2 !== 'undefined'){
-        data = data2;
+      var key = caseInsensitiveSearch(input, tagsTable);
+      if(typeof key !== 'undefined'){
+        data = tagsTable[key];
       }
       else{
-        const newString = input.charAt(0).toUpperCase().concat(input.substr(1));
-        var data3 = tagsTable[newString];
-        if(typeof data3 !== 'undefined'){
-          data = data3;
+        const path = specialCharacterParse(input);
+        //if path is only one string, insert as a root tag and add to note tags
+        if(path.length==1){
+          const newTag = {
+            _id: input,
+            children: [],
+            notes: [],
+            parent: null
+          };
+          const newRoots = handleInsertNewRootTag(newTag, tagsTable, rootTags);
+          this.setState({
+            rootTags: newRoots
+          });
+          data = newTag;
         }
         else{
-          //add as tag if here
-          return;
+          data = tagsTable[helperInsertPath(path)];
         }
       }
     }
     noteTags.push(data._id);
     var tagInput = "";
     this.setState({
-      taginput: tagInput,
+      tagInput: tagInput,
       note: {
         tags: noteTags
-      }
+      },
+      tagsTable: tagsTable,
+      rootTags: rootTags
     });
     return;
+    function helperInsertPath(path){
+      var prev = null;
+      for(var n=0; n<path.length; n++){
+        var curr = tagsTable[path[n]];
+        //if it doesnt appear to be an extant tag
+        if(typeof curr === 'undefined'){
+          const newKey = caseInsensitiveSearch(path[n], tagsTable);
+          //if it is an extant tag after all
+          if(typeof curr !== 'undefined'){
+            curr = tagsTable[newKey];
+          }
+          //if it is in fact a new tag
+          else{
+            //if n==0, insert new root tag!
+            if(n==0){
+              const newTag = {
+                _id: path[n],
+                children: [],
+                notes: [],
+                parent: null
+              };
+              rootTags = handleInsertNewRootTag(newTag, tagsTable, rootTags);
+              curr = tagsTable[path[n]];
+            }
+            //else, insert as a subtag!
+            else{
+              const newTag = {
+                _id: path[n],
+                children: [],
+                notes: [],
+                parent: prev
+              };
+              var promise = Promise.resolve("complete");
+              handleInsertNewSubTag(newTag, prev, tagsTable, rootTags, promise);
+              curr = tagsTable[path[n]];
+            }
+          }
+        }
+        prev = curr._id;
+      }
+      return prev;
+    }
   }
 
   //handles dragEnd event for the tagPanel
@@ -341,7 +390,7 @@ class CreateNewPage extends React.Component{
 
               left = {
                 <NewNote
-                  tagInput = {this.state.taginput}
+                  tagInput = {this.state.tagInput}
                   cTags = {this.state.note.tags}
                   onKeyPress = {this.handleTagKeyPress}
                   onTagInputChange = {this.handleTagInputChange}
@@ -474,7 +523,7 @@ function handleReInsertTag(draggedTagID, targetTagID, tagsTable, rootTags){
   });
   return rootTags;
 }
-//handles api calls for inserting {draggedTag} as a child of {targetTag}, also returning updated newState
+//handles api calls for inserting {newTag} as a child of {targetTag}, also returning updated newState
 //currently only supports inserting a childless tag
 function handleInsertNewSubTag(newTag, targetTagID, tagsTable, rootTags, promise){
   insertNewSubTag(newTag, targetTagID, tagsTable);
@@ -497,6 +546,7 @@ function handleInsertNewSubTag(newTag, targetTagID, tagsTable, rootTags, promise
       body: JSON.stringify(newTag)
     })
   });
+  console.log("refreshing with: ", rootTags);
   handleRefreshIndices(tagsTable, rootTags);
   return;
 }
