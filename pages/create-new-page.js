@@ -3,6 +3,7 @@ import React from 'react';
 import styles from '../styles/CreateNewPage.module.css';
 import NewNote from '../components/new-note.js';
 import TagPanel from '../components/tag-panel.js';
+import NoteSelect from '../components/note-select.js';
 import { caseInsensitiveSearch, specialCharacterParse } from '../util/string-parsing.js';
 import { resetServerContext } from 'react-beautiful-dnd';
 
@@ -12,7 +13,10 @@ class CreateNewPage extends React.Component{
   //constructor
   constructor(props){
     super(props);
+    this.handleNoteSelectClick=this.handleNoteSelectClick.bind(this);
     this.handlePublishClick=this.handlePublishClick.bind(this);
+    this.handleSaveClick=this.handleSaveClick.bind(this);
+    this.handleNewNoteClick=this.handleNewNoteClick.bind(this);
     this.handleNoteInputChange=this.handleNoteInputChange.bind(this);
     this.handleTagInputChange=this.handleTagInputChange.bind(this);
     this.handleTagKeyPress=this.handleTagKeyPress.bind(this);
@@ -25,13 +29,15 @@ class CreateNewPage extends React.Component{
     this.state= {
       tagInput: "",
       note: {
-        _id: 0,
-        input: "This is my note",
-        tags: []
+        _id: null,
+        content: "This is my note",
+        tags: [],
+        wRecs: []
       },
       tagsTable: props.tagsTable,
       rootTags: props.rootTags,
-      wRecs: []
+      wRecs: [],
+      curNotes: props.curNotes
     };
   }
 
@@ -40,8 +46,10 @@ class CreateNewPage extends React.Component{
   handleNoteInputChange(event){
     const cNote = this.state.note;
     this.setState({note: {
-      input: event.target.value,
-      tags: cNote.tags
+      _id: this.state.note._id,
+      content: event.target.value,
+      tags: cNote.tags,
+      wRecs: this.state.note.wRecs
     }});
   }
 
@@ -53,12 +61,35 @@ class CreateNewPage extends React.Component{
     });
   }
 
-  //handles onClick event for the publish button (analyzes and pushes a note to DB)
-  async handlePublishClick(event){
-    var noteInput=this.state.note.input;
-    this.analyzeNote(noteInput);
+  async handleSaveClick(event){
+    console.log("HERE");
+    var curNotes = this.state.curNotes;
+    const id = this.state.note._id;
+    const ind = curNotes.findIndex(note => note._id == this.state.note._id);
+    curNotes[ind] = this.state.note;
+    this.setState({curNotes: curNotes});
+    fetch('http://localhost:3000/api/mongo-updatenote', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(this.state.note)
+    });
   }
 
+  handleNewNoteClick(event){
+    var newNote = {
+      _id: null,
+      content: "Type here!",
+      tags: [],
+      wRecs: []
+    };
+    this.setState({note: newNote, wRecs: []});
+  }
+  //handles onClick event for the publish button (analyzes and pushes a note to DB)
+  async handlePublishClick(event){
+    this.analyzeNote();
+  }
   //helper functions for handlePublishClick
   async analyzeNote(){
     fetch('http://localhost:3000/api/watson-analyzenote', {
@@ -67,7 +98,7 @@ class CreateNewPage extends React.Component{
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        input: this.state.note.input,
+        input: this.state.note.content,
       })
     })
     .then(response => response.json())
@@ -86,7 +117,7 @@ class CreateNewPage extends React.Component{
   }
 
   async pushNoteToDB(tags){
-    let wRecs = await wRecs;
+    let wRecs = await tags;
 
     fetch('http://localhost:3000/api/mongo-insertnote', {
       method: 'POST',
@@ -94,13 +125,51 @@ class CreateNewPage extends React.Component{
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        content: this.state.note.input,
+        content: this.state.note.content,
         tags: this.state.note.tags,
         wRecs: wRecs
       })
-    })
-    .catch(error => {
-      console.error('DB push error:', error);
+    }).then(r => {
+      return fetch('http://localhost:3000/api/mongo-getnotes', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          content: this.state.note.content,
+        })
+      });
+    }).then(r => r.json())
+    .then(promise => this.updateNoteId(promise));
+  }
+
+  async updateNoteId(prom){
+    const res = await prom;
+    console.log(res);
+    const id = res[0]._id;
+    const newNote = {
+      _id: id,
+      content: this.state.note.content,
+      tags: this.state.note.tags,
+      wRecs: this.state.wRecs
+    };
+    var cNotes = this.state.curNotes;
+    cNotes.push(newNote);
+    this.setState({
+      note: newNote,
+      curNotes: cNotes
+    });
+  }
+
+  handleNoteSelectClick(event, note){
+    this.setState({
+      note: {
+        _id: note._id,
+        content: note.content,
+        tags: note.tags,
+        wRecs: note.wRecs
+      },
+      wRecs: note.wRecs
     });
   }
 
@@ -108,16 +177,17 @@ class CreateNewPage extends React.Component{
   handleTagBarClick(event, tag){
     var tags = this.state.note.tags;
     var tagsTable = this.state.tagsTable;
-    const curNoteI = this.state.note.input;
+    const curNoteI = this.state.note.content;
     tags.splice(tags.findIndex(cV => {
       return (cV == tag);
     }), 1);
     tagsTable[tag].noteTagMatch = 0;
     this.setState({
       note: {
-        _id: 0,
-        input: curNoteI,
-        tags: tags
+        _id: this.state.note._id,
+        content: curNoteI,
+        tags: tags,
+        wRecs: this.state.note.wRecs
       },
       tagsTable: tagsTable
     });
@@ -127,7 +197,7 @@ class CreateNewPage extends React.Component{
   handleETagClick(event, tag){
     var tags = this.state.note.tags.slice();
     var tagsTable = this.state.tagsTable;
-    const curNoteI = this.state.note.input;
+    const curNoteI = this.state.note.content;
     if(event.target.className==styles.removetagbutton){
       tags.splice(tags.findIndex(cV => cV == tag), 1);
       tagsTable[tag].noteTagMatch=0;
@@ -145,9 +215,10 @@ class CreateNewPage extends React.Component{
     }
     this.setState({
       note: {
-        _id: 0,
-        input: curNoteI,
-        tags: tags
+        _id: this.state.note._id,
+        content: curNoteI,
+        tags: tags,
+        wRecs: this.state.note.wRecs
       }
     });
   }
@@ -182,8 +253,10 @@ class CreateNewPage extends React.Component{
     const wRes = handleWRecDelete(id, this.state.wRecs.slice());
     this.setState({
       note: {
-        input: this.state.note.input,
-        tags: curNoteT
+        _id: this.state.note._id,
+        content: this.state.note.content,
+        tags: curNoteT,
+        wRecs: this.state.note.wRecs
       },
       rootTags: curRoots,
       tagsTable: tagsTable,
@@ -234,7 +307,10 @@ class CreateNewPage extends React.Component{
     this.setState({
       tagInput: tagInput,
       note: {
-        tags: noteTags
+        _id: this.state.note._id,
+        content: this.state.note.content,
+        tags: noteTags,
+        wRecs: this.state.note.wRecs
       },
       tagsTable: tagsTable,
       rootTags: rootTags
@@ -290,7 +366,6 @@ class CreateNewPage extends React.Component{
     if(!result){
       return;
     }
-    console.log("results: ", result);
     //if a combine
     if(result.combine){
       var rootTags = this.state.rootTags.slice();
@@ -298,7 +373,6 @@ class CreateNewPage extends React.Component{
       const targetTagID = result.combine.draggableId;
       //if came from watson suggestion
       if(result.source.droppableId=="wstags"){
-        console.log(result.draggableId);
         const tagID = result.draggableId.substr(2);
         const newTag = {
           _id: tagID,
@@ -379,7 +453,10 @@ class CreateNewPage extends React.Component{
           styleright = {styles.splitpaneright1}
 
           left = {
-            <div className={styles.placeholder}/>
+            <NoteSelect
+              notes = {this.state.curNotes}
+              onNoteClick = {this.handleNoteSelectClick}
+            />
           }
 
           right = {
@@ -396,8 +473,10 @@ class CreateNewPage extends React.Component{
                   onTagInputChange = {this.handleTagInputChange}
                   tagBarOnClick = {this.handleTagBarClick}
                   handleNoteInputChange = {this.handleNoteInputChange}
-                  noteInput = {this.state.note.input}
+                  noteInput = {this.state.note.content}
                   handlePublishClick = {this.handlePublishClick}
+                  handleSaveClick = {this.handleSaveClick}
+                  handleNewNoteClick = {this.handleNewNoteClick}
                 />
               }
 
@@ -546,7 +625,6 @@ function handleInsertNewSubTag(newTag, targetTagID, tagsTable, rootTags, promise
       body: JSON.stringify(newTag)
     })
   });
-  console.log("refreshing with: ", rootTags);
   handleRefreshIndices(tagsTable, rootTags);
   return;
 }
@@ -654,14 +732,22 @@ function handleWRecDelete(id, wRecs){
 
 export async function getStaticProps(context) {
   resetServerContext();
-  const res = await fetch('http://localhost:3000/api/mongo-gettags', {
+  const tagsRes = await fetch('http://localhost:3000/api/mongo-gettags', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'
     }
   });
-  var tags = await res.json();
+  var tags = await tagsRes.json();
   var roots = [];
+
+  const notesRes = await fetch('http://localhost:3000/api/mongo-getallnotes', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  });
+  var notes = await notesRes.json();
 
   //simultaneously populate tagsTable and roots array
   var tagsTable = {};
@@ -677,7 +763,8 @@ export async function getStaticProps(context) {
   return {
     props: {
       tagsTable: tagsTable,
-      rootTags: roots
+      rootTags: roots,
+      curNotes: notes
     }
   };
 }

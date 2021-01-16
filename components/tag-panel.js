@@ -102,7 +102,6 @@ function TagTree(props){
     }
   }
   function helperTreeRecurse(tag){
-    console.log(tag);
     const myTag = tagsTable[tag];
     var myResults = [];
     //loop through children to add to results

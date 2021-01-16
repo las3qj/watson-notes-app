@@ -20,7 +20,8 @@ export default function NewNote(props){
       />
       <BottomBar
         publishOnClick={props.handlePublishClick}
-        handleSubTag = {props.handleSubTag}
+        handleSaveClick = {props.handleSaveClick}
+        handleNewNoteClick = {props.handleNewNoteClick}
       />
     </div>
   );
@@ -40,8 +41,6 @@ function TopBar(props){
   var tags = props.tags.slice();
   return(
     <div className={styles.topbar}>
-      <label htmlFor="title" className={styles.toplabels}> title: </label>
-      <input type="text" id="title" className="TitleInput" value="My first note" />
       <label htmlFor="tags" className={styles.toplabels}> tags: </label>
       <input type="text" onChange={props.onTagInputChange} onKeyPress={props.onKeyPress} id="tags" className="TagInput" value={props.tagInput}/>
       <span className={styles.toplabels}>
@@ -67,7 +66,8 @@ function NoteTextBox(props){
 function BottomBar(props){
   return(
     <div className={styles.bottombar}>
-      <button onClick={props.handleSubTag}> Save changes </button>
+      <button onClick={props.handleSaveClick}> Save changes </button>
+      <button onClick={props.handleNewNoteClick}> New note </button>
       <button onClick={props.publishOnClick}> Publish </button>
     </div>
   )
