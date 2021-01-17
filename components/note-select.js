@@ -4,7 +4,11 @@ import styles from '../styles/CreateNewPage.module.css';
 export default function NoteSelect(props){
   return(
     <div className={styles.noteselect}>
-      <TopBar />
+      <TopBar
+        onInputChange={props.onSearchInputChange}
+        onKeyPress={props.onSearchKeyPress}
+        searchInput={props.searchInput}
+      />
       <NoteList notes={props.notes} onClick={props.onNoteClick}/>
     </div>
   )
@@ -14,7 +18,10 @@ function TopBar(props){
   return(
     <div className={styles.topbar}>
       <label htmlFor="search" className={styles.toplabels}> search: </label>
-      <input type="text"  id="search" className="searchInput" />
+      <input
+        type="text"  id="search" className="searchInput" value={props.searchInput}
+        onChange={props.onInputChange} onKeyPress={props.onKeyPress}
+      />
     </div>
   );
 }

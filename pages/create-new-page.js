@@ -4,7 +4,7 @@ import styles from '../styles/CreateNewPage.module.css';
 import NewNote from '../components/new-note.js';
 import TagPanel from '../components/tag-panel.js';
 import NoteSelect from '../components/note-select.js';
-import { caseInsensitiveSearch, specialCharacterParse } from '../util/string-parsing.js';
+import { caseInsensitiveSearch, specialCharacterParse, searchParse } from '../util/string-parsing.js';
 import { resetServerContext } from 'react-beautiful-dnd';
 
 
@@ -19,7 +19,9 @@ class CreateNewPage extends React.Component{
     this.handleNewNoteClick=this.handleNewNoteClick.bind(this);
     this.handleNoteInputChange=this.handleNoteInputChange.bind(this);
     this.handleTagInputChange=this.handleTagInputChange.bind(this);
+    this.handleSearchInputChange=this.handleSearchInputChange.bind(this);
     this.handleTagKeyPress=this.handleTagKeyPress.bind(this);
+    this.handleSearchKeyPress=this.handleSearchKeyPress.bind(this);
     this.handleTagBarClick=this.handleTagBarClick.bind(this);
     this.handleETagClick=this.handleETagClick.bind(this);
     this.handleWTagClick=this.handleWTagClick.bind(this);
@@ -28,6 +30,7 @@ class CreateNewPage extends React.Component{
     this.pushNoteToDB=this.pushNoteToDB.bind(this);
     this.state= {
       tagInput: "",
+      searchInput: "/All",
       note: {
         _id: null,
         content: "This is my note",
@@ -37,7 +40,8 @@ class CreateNewPage extends React.Component{
       tagsTable: props.tagsTable,
       rootTags: props.rootTags,
       wRecs: [],
-      curNotes: props.curNotes
+      curNotes: props.curNotes,
+      curQuery: props.curQuery
     };
   }
 
@@ -61,13 +65,49 @@ class CreateNewPage extends React.Component{
     });
   }
 
+  handleSearchInputChange(event){
+    const newI = event.target.value;
+    if(newI.indexOf("&") !==-1 && (newI.indexOf("|") !== -1 || newI.indexOf("/") !== -1 || newI.indexOf("\\") !== -1) ){
+      return;
+    }
+    if(newI.indexOf("|") !==-1 && (newI.indexOf("&") !== -1 || newI.indexOf("/") !== -1 || newI.indexOf("\\") !== -1) ){
+      return;
+    }
+    if((newI.trim().indexOf("/", 1) > -1 || newI.trim().indexOf("\\", 1) > -1 )){
+      return;
+    }
+    this.setState({
+      searchInput: newI
+    });
+  }
+
   async handleSaveClick(event){
-    console.log("HERE");
-    var curNotes = this.state.curNotes;
+    var curNotes = this.state.curNotes.slice();
     const id = this.state.note._id;
     const ind = curNotes.findIndex(note => note._id == this.state.note._id);
-    curNotes[ind] = this.state.note;
-    this.setState({curNotes: curNotes});
+    //if it should be in curNotes
+    if(handleCheckAgainstQuery(this.state.note.tags, this.state.curQuery)){
+      //but its not
+      if(ind == -1){
+        curNotes.push(this.state.note);
+        this.setState({curNotes: curNotes});
+      }
+      //if it is, update it
+      else{
+        curNotes[ind] = this.state.note;
+        this.setState({curNotes: curNotes});
+      }
+    }
+    //if it should NOT be in curNotes
+    else{
+      //but it is
+      if(ind > -1){
+        curNotes.splice(ind, 1);
+        this.setState({curNotes: curNotes});
+      }
+      //if it isnt, do nothing
+    }
+
     fetch('http://localhost:3000/api/mongo-updatenote', {
       method: 'POST',
       headers: {
@@ -78,6 +118,7 @@ class CreateNewPage extends React.Component{
   }
 
   handleNewNoteClick(event){
+    handleResetMatches(this.state.tagsTable, this.state.note.tags);
     var newNote = {
       _id: null,
       content: "Type here!",
@@ -130,7 +171,7 @@ class CreateNewPage extends React.Component{
         wRecs: wRecs
       })
     }).then(r => {
-      return fetch('http://localhost:3000/api/mongo-getnotes', {
+      return fetch('http://localhost:3000/api/mongo-getnotefromcontent', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -145,7 +186,6 @@ class CreateNewPage extends React.Component{
 
   async updateNoteId(prom){
     const res = await prom;
-    console.log(res);
     const id = res[0]._id;
     const newNote = {
       _id: id,
@@ -154,7 +194,11 @@ class CreateNewPage extends React.Component{
       wRecs: this.state.wRecs
     };
     var cNotes = this.state.curNotes;
-    cNotes.push(newNote);
+    //REVIEW -- also needs to check if a dif query if curNote fits the query
+    if(handleCheckAgainstQuery(newNote.tags, this.state.curQuery)){
+      cNotes.push(newNote);
+    }
+
     this.setState({
       note: newNote,
       curNotes: cNotes
@@ -162,6 +206,7 @@ class CreateNewPage extends React.Component{
   }
 
   handleNoteSelectClick(event, note){
+    handleResetMatches(this.state.tagsTable, this.state.note.tags);
     this.setState({
       note: {
         _id: note._id,
@@ -175,7 +220,7 @@ class CreateNewPage extends React.Component{
 
   //handles onClick event for any tagBar tag
   handleTagBarClick(event, tag){
-    var tags = this.state.note.tags;
+    var tags = this.state.note.tags.slice();
     var tagsTable = this.state.tagsTable;
     const curNoteI = this.state.note.content;
     tags.splice(tags.findIndex(cV => {
@@ -360,6 +405,104 @@ class CreateNewPage extends React.Component{
     }
   }
 
+  async handleSearchKeyPress(event){
+    if (event.key !== "Enter"){
+      return;
+    }
+    const input = event.target.value.trim();
+    const res = searchParse(input);
+    this.handleNoteSearch(res);
+  }
+
+  async handleNoteSearch(results){
+    const type=results.type;
+    var promise;
+    var newQuery;
+    if(type == "command"){
+      if(results.command == "all"){
+        promise = fetch('http://localhost:3000/api/mongo-getallnotes', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        });
+        newQuery = {
+          type: "command",
+          command: "all"
+        };
+      }
+    }
+    else if(type == "tag"){
+      const key = caseInsensitiveSearch(results.tag, this.state.tagsTable);
+      if(typeof key === 'undefined'){
+        this.setState({searchInput: "tag: "+results.tag+" not found"});
+        return;
+      }
+      else{
+        promise = fetch('http://localhost:3000/api/mongo-getnotefromtag', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({tag: key})
+        });
+        newQuery = {
+          type: "tag",
+          tag: key
+        };
+      }
+    }
+    //if multi-tag search
+    else if(type == "ortags" || type == "andtags"){
+      const tagsArray = results.tags;
+      var newTags = [];
+      //iterate, double-checking that these tags are valid
+      for(var n=0; n<tagsArray.length; n++){
+        newTags[n] = [];
+        for(var m=0; m<tagsArray[n].length; m++){
+          const key = caseInsensitiveSearch(tagsArray[n][m], this.state.tagsTable);
+          if(typeof key !== 'undefined'){
+            newTags[n].push(key);
+          }
+          else{
+            console.log("tag "+tagsArray[n][m]+" not found");
+          }
+        }
+      }
+      //if any array is now empty, remove it
+      for(var p=newTags.length-1; p>=0; p--){
+        if(newTags[p].length==0){
+          newTags.splice(p, 1);
+        }
+      }
+      //if no tags remain...
+      if(newTags.length==0){
+        console.log("no valid tags to search");
+        return;
+      }
+      promise = fetch('http://localhost:3000/api/mongo-getnotefromtags', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({tags: newTags})
+      });
+      newQuery = {
+        type: type,
+        tags: newTags
+      };
+    }
+    //update notes
+    promise.then(res => res.json())
+    .then(notes => {
+      handleResetMatches(this.state.tagsTable, this.state.note.tags);
+      this.setState({
+        curNotes: notes,
+        curQuery: newQuery
+      });
+    });
+  }
+
   //handles dragEnd event for the tagPanel
   async handleDragEnd(result){
     //if no result, return
@@ -456,6 +599,9 @@ class CreateNewPage extends React.Component{
             <NoteSelect
               notes = {this.state.curNotes}
               onNoteClick = {this.handleNoteSelectClick}
+              onSearchInputChange = {this.handleSearchInputChange}
+              onSearchKeyPress = {this.handleSearchKeyPress}
+              searchInput = {this.state.searchInput}
             />
           }
 
@@ -511,6 +657,7 @@ function SplitPane(props) {
     </div>
   );
 }
+
 //handles api calls for moving {draggedTagID} to {targetTagID}, also returning updated roots
 function handleMoveTag(draggedTagID, targetTagID, tagsTable, rootTags){
   //two steps to 'delete':
@@ -669,6 +816,12 @@ function handleRefreshIndices(tagsTable, roots){
     return nextI;
   }
 }
+//handles resetting any matches with curNotes
+function handleResetMatches(tagsTable, curNotes){
+  for(var n=0; n<curNotes.length; n++){
+    tagsTable[curNotes[n]].noteTagMatch = 0;
+  }
+}
 //parses three arrays into a single array, sorted by relevance and removed of repeated elements (case insensitive)
 function parseWatsonRecs(con, ent, kyw){
   var results = [];
@@ -730,6 +883,38 @@ function handleWRecDelete(id, wRecs){
   return wRecs;
 }
 
+function handleCheckAgainstQuery(tags, curQuery){
+  const type = curQuery.type;
+  if(type=="command" && curQuery.command == "all"){
+    return true;
+  }
+  if(type=="tag"){
+    const tag = curQuery.tag;
+    if(tags.findIndex(el => el == tag) > -1){
+      return true;
+    }
+    return false;
+  }
+  if(type=="ortags"){
+    const qTags = curQuery.tags;
+    for(var n=0; n<qTags[0].length; n++){
+      if(tags.findIndex(el => el == qTags[0][n]) > -1){
+        return true;
+      }
+    }
+    return false;
+  }
+  if(type=="andtags"){
+    const qTags = curQuery.tags;
+    for(var n=0; n<qTags.length; n++){
+      if(tags.findIndex(el => el ==qTags[n][0]) == -1){
+        return false;
+      }
+    }
+    return true;
+  }
+}
+
 export async function getStaticProps(context) {
   resetServerContext();
   const tagsRes = await fetch('http://localhost:3000/api/mongo-gettags', {
@@ -764,7 +949,11 @@ export async function getStaticProps(context) {
     props: {
       tagsTable: tagsTable,
       rootTags: roots,
-      curNotes: notes
+      curNotes: notes,
+      curQuery: {
+        type: "command",
+        command: "all"
+      }
     }
   };
 }

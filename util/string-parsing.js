@@ -1,9 +1,6 @@
 function caseInsensitiveSearch(string, tagsTable){
   const keys = Object.keys(tagsTable);
   const key = keys.find(el => el.toLowerCase() == string.toLowerCase());
-  if(typeof key === 'undefined'){
-    return undefined;
-  }
   return key;
 }
 
@@ -28,4 +25,76 @@ function specialCharacterParse(string){
   return path;
 }
 
-export {caseInsensitiveSearch, specialCharacterParse};
+function searchParse(string){
+  //first trim the string
+  string = string.trim();
+  //search for special characters
+  const regex = /[\/\\&|]/g;
+  var indices = string.match(regex);
+  //no matches, assume a single tag search
+  if(indices==null){
+    return {
+      type: "tag",
+      tag: string
+    }
+  }
+  //if basckslash/forwardslash starts the string: special command
+  if(indices[0]==="/" || indices[0]==="\\"){
+    const index = string.indexOf(indices[0]);
+    if(index == 0){
+      const subS = string.substring(index+1).trim();
+      var command;
+      if(subS.indexOf(" ")>-1){
+        command = subS.substring(0, subS.indexOf(" "));
+      }
+      else{
+        command = subS.toLowerCase();
+      }
+      return{
+        type:"command",
+        command: command
+      };
+    }
+  }
+  //if and-ing tags:
+  if(indices[0]==="&"){
+    var start = 0;
+    var index = string.indexOf("&");
+    var tagArray = [];
+    while(index>-1){
+      var sub = string.substring(start, index);
+      tagArray.push([sub.trim()]);
+      start = index+1;
+      index = string.indexOf("&", start);
+    }
+    var sub = string.substring(start).trim();
+    tagArray.push([sub]);
+    return{
+      type: "andtags",
+      tags: tagArray
+    };
+  }
+  //if or-ing tags:
+  if(indices[0]==="|"){
+    var start = 0;
+    var index = string.indexOf("|");
+    var tagArray = [];
+    tagArray[0] = [];
+    while(index>-1){
+      var sub = string.substring(start, index);
+      tagArray[0].push(sub.trim());
+      start = index+1;
+      index = string.indexOf("|", start);
+    }
+    var sub = string.substring(start).trim();
+    tagArray[0].push(sub);
+    return{
+      type: "ortags",
+      tags: tagArray
+    };
+  }
+
+  return "nothing";
+}
+
+export {caseInsensitiveSearch, specialCharacterParse, searchParse};
