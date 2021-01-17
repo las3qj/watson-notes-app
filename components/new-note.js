@@ -32,7 +32,7 @@ function TopBar(props){
   function toTagButton(tag){
     return (
       <TagButton
-        type={false}
+        className={styles.removetagbutton}
         onClick={props.onClick}
         tag={tag}
       />

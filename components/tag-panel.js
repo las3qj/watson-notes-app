@@ -1,9 +1,11 @@
 import React from 'react';
 import styles from '../styles/CreateNewPage.module.css';
+import { caseInsensitiveSearch } from '../util/string-parsing.js';
 import { DragDropContext, Droppable, Draggable, resetServerContext } from 'react-beautiful-dnd';
 
 //Expected props: rootsTags, tagsTable, noteTags
 export default function TagPanel(props){
+  var wRecs = parseTags(props.wRecs.slice(), props.noteTags.slice(), props.tagsTable);
   return(
     <DragDropContext onDragEnd={props.onDragEnd} className={styles.tagpanel}>
       <ExtantTags
@@ -15,10 +17,44 @@ export default function TagPanel(props){
       <WatsonTags
         size = {Object.keys(props.tagsTable).length}
         onClick = {props.onWsClick}
-        wRecs = {props.wRecs}
+        wRecs = {wRecs}
       />
     </DragDropContext>
   );
+}
+
+//REVIEW -- is too much to do while rendering??
+function parseTags(wRecs, noteTags, tagsTable){
+  wRecs = parseNoteTags();
+  wRecs = parseWRecs();
+  return wRecs;
+
+  //assumes noteTgs is an array of STRINGS referring to tags
+  //returns wRecs purged of matches with a tag in notetags
+  function parseNoteTags(){
+    var res = wRecs.slice();
+    for(var p=0; p<noteTags.length; p++){
+      //first match with tagsTable
+      tagsTable[noteTags[p]].noteTagMatch = 1;
+      //then with wRecs
+      const index = res.findIndex(el => el._id.toLowerCase() == noteTags[p].toLowerCase());
+      if(index > -1){
+        res.splice(index, 1);
+      }
+    }
+    return res;
+  }
+  function parseWRecs(){
+    var res = wRecs.slice();
+    for(var n=0; n<wRecs.length; n++){
+      const key = caseInsensitiveSearch(wRecs[n]._id, tagsTable);
+      if(typeof key !== 'undefined'){
+        res[n].eTagMatch = 1;
+        tagsTable[key].wTagMatch = 1;
+      }
+    }
+    return res;
+  }
 }
 
 function ExtantTags(props){
@@ -43,7 +79,7 @@ function WatsonTags(props){
         {(provided) => (
           <li ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps}>
             <TagButton
-              type= {true}
+              className= {dTag.eTagMatch ? styles.wrecmatchbutton : styles.addtagbutton}
               onClick={props.onClick}
               tag={dTag._id}
             />
@@ -72,10 +108,6 @@ function TagTree(props){
   var tagsTable = props.tagsTable;
   var results = [];
 
-  //first find each tag in the hashtable that corresponds to a note tag,
-  //marking them for ease of tree construction
-  matchNoteTags(noteTags);
-
   for(var n=0; n<rootTags.length; n++){
     const root = rootTags[n];
     const res = helperTreeRecurse(root);
@@ -94,13 +126,6 @@ function TagTree(props){
     </div>
   );
 
-  //REVIEW
-  //assumes noteTgs is an array of STRINGS referring to tags
-  function matchNoteTags(noteTgs){
-    for(var p=0; p<noteTgs.length; p++){
-      tagsTable[noteTgs[p]].noteTagMatch = 1;
-    }
-  }
   function helperTreeRecurse(tag){
     const myTag = tagsTable[tag];
     var myResults = [];
@@ -110,13 +135,22 @@ function TagTree(props){
       myResults.push(res);
     }
     const data = tagsTable[tag];
-    const type = data.noteTagMatch ? 0 : 1;
+    var className;
+    if(data.noteTagMatch){
+      className = styles.removetagbutton;
+    }
+    else if(data.wTagMatch){
+      className = styles.wrecmatchbutton;
+    }
+    else {
+      className = styles.addtagbutton;
+    }
 
     return(
       <div>
         <TagTreeNode
           tag={data}
-          type={type}
+          className={className}
           onClick={props.onClick}
         />
         <ul>
@@ -132,7 +166,7 @@ function TagTreeNode(props){
     <Draggable key = {""+props.tag.index} draggableId={props.tag._id} index={props.tag.index}>
       {(provided) => (
         <li ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps}>
-          <TagButton tag={props.tag._id} type={props.type} onClick={props.onClick}/>
+          <TagButton tag={props.tag._id} className={props.className} onClick={props.onClick}/>
         </li>
       )}
     </Draggable>
@@ -143,7 +177,7 @@ function TagButton(props){
   return(
     <button
       onClick={(e)=>props.onClick(e, props.tag)}
-      className={props.type ? styles.addtagbutton : styles.removetagbutton}
+      className={props.className}
     > {props.tag} </button>
   )
 }

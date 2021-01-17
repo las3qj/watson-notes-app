@@ -5,6 +5,7 @@ function caseInsensitiveSearch(string, tagsTable){
 }
 
 function specialCharacterParse(string){
+  string = string.trim();
   const regex = /[\/\\:>]/g;
   var indices = string.match(regex);
   if(indices==null){
@@ -16,7 +17,7 @@ function specialCharacterParse(string){
   for(var n=start; n<indices.length; n++){
     const ind = string.indexOf(indices[n], start);
     if(ind!=start){
-      path.push(string.substring(start, ind));
+      path.push(string.substring(start, ind).trim());
     }
     start = ind + 1;
   }
