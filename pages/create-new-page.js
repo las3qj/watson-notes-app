@@ -4,6 +4,7 @@ import styles from '../styles/CreateNewPage.module.css';
 import NewNote from '../components/new-note.js';
 import TagPanel from '../components/tag-panel.js';
 import NoteSelect from '../components/note-select.js';
+import Container from 'react-bootstrap/Container';
 import { caseInsensitiveSearch, specialCharacterParse, searchParse } from '../util/string-parsing.js';
 import { resetServerContext } from 'react-beautiful-dnd';
 
@@ -35,13 +36,17 @@ class CreateNewPage extends React.Component{
         _id: null,
         content: "This is my note",
         tags: [],
-        wRecs: []
+        wRecs: [],
+        unsavedChanges: 0
       },
       tagsTable: props.tagsTable,
       rootTags: props.rootTags,
       wRecs: [],
       curNotes: props.curNotes,
-      curQuery: props.curQuery
+      curQuery: {
+        external: props.curQuery.external,
+        internal: props.curQuery.internal
+      }
     };
   }
 
@@ -55,7 +60,8 @@ class CreateNewPage extends React.Component{
       _id: this.state.note._id,
       content: event.target.value,
       tags: cNote.tags,
-      wRecs: this.state.note.wRecs
+      wRecs: this.state.note.wRecs,
+      unsavedChanges: 1
     }});
   }
   //change of input in the tag text field
@@ -118,6 +124,10 @@ class CreateNewPage extends React.Component{
       },
       body: JSON.stringify(this.state.note)
     });
+    this.setState({note: {
+      ...this.state.note,
+      unsavedChanges: 0
+    }});
   }
   //when the new note button is clicked
   handleNewNoteClick(event){
@@ -126,7 +136,8 @@ class CreateNewPage extends React.Component{
       _id: null,
       content: "Type here!",
       tags: [],
-      wRecs: []
+      wRecs: [],
+      unsavedChanges: 0
     };
     this.setState({note: newNote, wRecs: []});
   }
@@ -195,7 +206,8 @@ class CreateNewPage extends React.Component{
       _id: id,
       content: this.state.note.content,
       tags: this.state.note.tags,
-      wRecs: this.state.wRecs
+      wRecs: this.state.wRecs,
+      unsavedChanges: 0
     };
     var cNotes = this.state.curNotes;
     //checks current note against current query
@@ -217,7 +229,8 @@ class CreateNewPage extends React.Component{
         _id: note._id,
         content: note.content,
         tags: note.tags,
-        wRecs: note.wRecs
+        wRecs: note.wRecs,
+        unsavedChanges: 0
       },
       wRecs: note.wRecs
     });
@@ -236,7 +249,8 @@ class CreateNewPage extends React.Component{
         _id: this.state.note._id,
         content: curNoteI,
         tags: tags,
-        wRecs: this.state.note.wRecs
+        wRecs: this.state.note.wRecs,
+        unsavedChanges: 1
       },
       tagsTable: tagsTable
     });
@@ -245,8 +259,9 @@ class CreateNewPage extends React.Component{
   handleETagClick(event, tag){
     var tags = this.state.note.tags.slice();
     var tagsTable = this.state.tagsTable;
+    var curNoteTags = this.state.note.tags;
     const curNoteI = this.state.note.content;
-    if(event.target.className==styles.removetagbutton){
+    if(curNoteTags.findIndex(el => el.toLowerCase() == tag.toLowerCase()) > -1){
       tags.splice(tags.findIndex(cV => cV == tag), 1);
       tagsTable[tag].noteTagMatch=0;
     }
@@ -266,7 +281,8 @@ class CreateNewPage extends React.Component{
         _id: this.state.note._id,
         content: curNoteI,
         tags: tags,
-        wRecs: this.state.note.wRecs
+        wRecs: this.state.note.wRecs,
+        unsavedChanges: 1
       }
     });
   }
@@ -307,7 +323,8 @@ class CreateNewPage extends React.Component{
         _id: this.state.note._id,
         content: this.state.note.content,
         tags: curNoteT,
-        wRecs: this.state.note.wRecs
+        wRecs: this.state.note.wRecs,
+        unsavedChanges: 1
       },
       rootTags: curRoots,
       tagsTable: tagsTable
@@ -360,7 +377,8 @@ class CreateNewPage extends React.Component{
         _id: this.state.note._id,
         content: this.state.note.content,
         tags: noteTags,
-        wRecs: this.state.note.wRecs
+        wRecs: this.state.note.wRecs,
+        unsavedChanges: 1
       },
       tagsTable: tagsTable,
       rootTags: rootTags
@@ -423,7 +441,8 @@ class CreateNewPage extends React.Component{
     var tagsTable = this.state.tagsTable;
     const type=results.type;
     var promise;
-    var newQuery;
+    var newInt;
+    var newExt;
     if(type == "command"){
       if(results.command == "all"){
         promise = fetch('http://localhost:3000/api/mongo-getallnotes', {
@@ -432,15 +451,17 @@ class CreateNewPage extends React.Component{
             'Content-Type': 'application/json'
           }
         });
-        newQuery = {
+        newInt = {
           type: "command",
           command: "all"
         };
+        newExt = "All notes";
       }
     }
     else if(type == "tag"){
       const key = caseInsensitiveSearch(results.tag, tagsTable);
       if(typeof key === 'undefined'){
+        //REVIEW
         this.setState({searchInput: "tag: "+results.tag+" not found"});
         return;
       }
@@ -456,7 +477,8 @@ class CreateNewPage extends React.Component{
           },
           body: JSON.stringify({tags: [res]})
         });
-        newQuery = {
+        newExt = key+"/...";
+        newInt = {
           type: "tags",
           tags: [res]
         };
@@ -469,7 +491,8 @@ class CreateNewPage extends React.Component{
           },
           body: JSON.stringify({tag: key})
         });
-        newQuery = {
+        newExt = key;
+        newInt = {
           type: "tag",
           tag: key
         };
@@ -479,19 +502,28 @@ class CreateNewPage extends React.Component{
     else if(type == "ortags" || type == "andtags"){
       const tagsArray = results.tags;
       var newTags = [];
+      newExt = "";
       //iterate, double-checking that these tags are valid
       for(var n=0; n<tagsArray.length; n++){
+        if(n>0){
+          newExt = newExt+" & ";
+        }
         newTags[n] = [];
         for(var m=0; m<tagsArray[n].length; m++){
+          if(m>0){
+            newExt = newExt+" | ";
+          }
           const key = caseInsensitiveSearch(tagsArray[n][m], tagsTable);
           if(typeof key !== 'undefined'){
             //if has children....
             if(tagsTable[key].children.length>0){
               const res = handleSearchRecurseChildren(key, tagsTable);
               newTags[n] = newTags[n].concat(res);
+              newExt = newExt+key+"/...";
             }
             else{
               newTags[n].push(key);
+              newExt = newExt+key;
             }
           }
           else{
@@ -517,7 +549,7 @@ class CreateNewPage extends React.Component{
         },
         body: JSON.stringify({tags: newTags})
       });
-      newQuery = {
+      newInt = {
         type: type,
         tags: newTags
       };
@@ -528,7 +560,10 @@ class CreateNewPage extends React.Component{
       handleResetMatches(this.state.tagsTable, this.state.note.tags, this.state.wRecs);
       this.setState({
         curNotes: notes,
-        curQuery: newQuery
+        curQuery: {
+          external: newExt,
+          internal: newInt
+        }
       });
     });
   }
@@ -633,6 +668,7 @@ class CreateNewPage extends React.Component{
               onSearchInputChange = {this.handleSearchInputChange}
               onSearchKeyPress = {this.handleSearchKeyPress}
               searchInput = {this.state.searchInput}
+              curQuery = {this.state.curQuery}
             />
           }
 
@@ -645,12 +681,11 @@ class CreateNewPage extends React.Component{
               left = {
                 <NewNote
                   tagInput = {this.state.tagInput}
-                  cTags = {this.state.note.tags}
+                  note = {this.state.note}
                   onKeyPress = {this.handleTagKeyPress}
                   onTagInputChange = {this.handleTagInputChange}
                   tagBarOnClick = {this.handleTagBarClick}
                   handleNoteInputChange = {this.handleNoteInputChange}
-                  noteInput = {this.state.note.content}
                   handlePublishClick = {this.handlePublishClick}
                   handleSaveClick = {this.handleSaveClick}
                   handleNewNoteClick = {this.handleNewNoteClick}
@@ -926,19 +961,19 @@ function handleWRecDelete(id, wRecs){
 //checks the tags in tags against curQuery,
 //returning true if the note with tags {tags} should be in curNotes, false otherwise
 function handleCheckAgainstQuery(tags, curQuery){
-  const type = curQuery.type;
-  if(type=="command" && curQuery.command == "all"){
+  const type = curQuery.internal.type;
+  if(type=="command" && curQuery.internal.command == "all"){
     return true;
   }
   if(type=="tag"){
-    const tag = curQuery.tag;
+    const tag = curQuery.internal.tag;
     if(tags.findIndex(el => el == tag) > -1){
       return true;
     }
     return false;
   }
   if(type=="ortags"){
-    const qTags = curQuery.tags;
+    const qTags = curQuery.internal.tags;
     for(var n=0; n<qTags[0].length; n++){
       if(tags.findIndex(el => el == qTags[0][n]) > -1){
         return true;
@@ -947,7 +982,7 @@ function handleCheckAgainstQuery(tags, curQuery){
     return false;
   }
   if(type=="andtags"){
-    const qTags = curQuery.tags;
+    const qTags = curQuery.internal.tags;
     for(var n=0; n<qTags.length; n++){
       if(tags.findIndex(el => el ==qTags[n][0]) == -1){
         return false;
@@ -1002,8 +1037,11 @@ export async function getStaticProps(context) {
       rootTags: roots,
       curNotes: notes,
       curQuery: {
-        type: "command",
-        command: "all"
+        internal: {
+          type: "command",
+          command: "all"
+        },
+        external: "All notes"
       }
     }
   };

@@ -1,6 +1,8 @@
 import React from 'react';
 import styles from '../styles/CreateNewPage.module.css';
 import {TagButton} from '../components/tag-panel.js';
+import Badge from 'react-bootstrap/Badge';
+import Button from 'react-bootstrap/Button';
 
 //NewNote, a controlled component for writing a new note
 export default function NewNote(props){
@@ -12,13 +14,14 @@ export default function NewNote(props){
         onKeyPress={props.onKeyPress}
         onTagInputChange={props.onTagInputChange}
         tagInput={props.tagInput}
-        tags={props.cTags}
+        tags={props.note.tags}
         />
       <NoteTextBox
-        content= {props.noteInput}
+        content= {props.note.content}
         onInputChange= {props.handleNoteInputChange}
       />
       <BottomBar
+        unsavedChanges = {props.note.unsavedChanges}
         publishOnClick={props.handlePublishClick}
         handleSaveClick = {props.handleSaveClick}
         handleNewNoteClick = {props.handleNewNoteClick}
@@ -32,7 +35,7 @@ function TopBar(props){
   function toTagButton(tag){
     return (
       <TagButton
-        className={styles.removetagbutton}
+        variant="success"
         onClick={props.onClick}
         tag={tag}
       />
@@ -41,8 +44,8 @@ function TopBar(props){
   var tags = props.tags.slice();
   return(
     <div className={styles.topbar}>
-      <label htmlFor="tags" className={styles.toplabels}> tags: </label>
-      <input type="text" onChange={props.onTagInputChange} onKeyPress={props.onKeyPress} id="tags" className="TagInput" value={props.tagInput}/>
+      <Badge variant="light"> Tags </Badge>
+      <input type="text" onChange={props.onTagInputChange} onKeyPress={props.onKeyPress} id="tags" className="searchbar" value={props.tagInput}/>
       <span className={styles.toplabels}>
         {tags.map(toTagButton)}
       </span>
@@ -65,10 +68,10 @@ function NoteTextBox(props){
 //BottomBar, holding the submit and save changes buttons
 function BottomBar(props){
   return(
-    <div className={styles.bottombar}>
-      <button onClick={props.handleSaveClick}> Save changes </button>
-      <button onClick={props.handleNewNoteClick}> New note </button>
-      <button onClick={props.publishOnClick}> Publish </button>
+    <div className={"buttonbar"}>
+      <Button variant="primary" onClick={props.handleSaveClick} disabled={!props.unsavedChanges}> Save changes </Button>
+      <Button variant="secondary" onClick={props.handleNewNoteClick}> New note </Button>
+      <Button variant="primary" onClick={props.publishOnClick}> Analyze </Button>
     </div>
   )
 }

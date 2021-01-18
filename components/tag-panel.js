@@ -2,6 +2,10 @@ import React from 'react';
 import styles from '../styles/CreateNewPage.module.css';
 import { caseInsensitiveSearch } from '../util/string-parsing.js';
 import { DragDropContext, Droppable, Draggable, resetServerContext } from 'react-beautiful-dnd';
+import SplitButton from 'react-bootstrap/SplitButton';
+import Button from 'react-bootstrap/Button';
+import Dropdown from 'react-bootstrap/Dropdown';
+import Badge from 'react-bootstrap/Badge';
 
 //Expected props: rootsTags, tagsTable, noteTags
 export default function TagPanel(props){
@@ -60,7 +64,9 @@ function parseTags(wRecs, noteTags, tagsTable){
 function ExtantTags(props){
   return(
     <div className={styles.extags}>
-      Existing tags:
+      <h4>
+        <Badge variant = "light"> My tags </Badge>
+      </h4>
       <TagTree
         rootTags={props.rootTags}
         tagsTable={props.tagsTable}
@@ -74,14 +80,17 @@ function ExtantTags(props){
 //props: wRecs, size
 function WatsonTags(props){
   function tagsToButton(dTag, index){
+    const dropDownItems = ["Rename and add", "Delete", "Hide"];
     return (
       <Draggable key = {""+index} draggableId={"wS"+dTag._id} index={index}>
         {(provided) => (
           <li ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps}>
-            <TagButton
-              className= {dTag.eTagMatch ? styles.wrecmatchbutton : styles.addtagbutton}
+            <TagSplitButton
+              variant= {dTag.eTagMatch ? "info" : "primary"}
               onClick={props.onClick}
               tag={dTag._id}
+              badge={dTag.eTagMatch ? "!" : "false"}
+              dropDownItems={dropDownItems}
             />
           </li>
         )}
@@ -90,7 +99,9 @@ function WatsonTags(props){
   }
   return(
     <div className={styles.wstags}>
-      Suggested Tags:
+      <h4>
+        <Badge variant = "light"> Suggested tags </Badge>
+      </h4>
       <Droppable droppableId="wstags" isDropDisabled={true}>
         {(provided) => (
           <ul {...provided.droppableProps} ref={provided.innerRef}>
@@ -135,22 +146,25 @@ function TagTree(props){
       myResults.push(res);
     }
     const data = tagsTable[tag];
-    var className;
+    var variant;
+    var badge = "false";
     if(data.noteTagMatch){
-      className = styles.removetagbutton;
+      variant = "success";
     }
     else if(data.wTagMatch){
-      className = styles.wrecmatchbutton;
+      variant = "info";
+      badge = "!";
     }
     else {
-      className = styles.addtagbutton;
+      variant = "primary";
     }
 
     return(
       <div>
         <TagTreeNode
           tag={data}
-          className={className}
+          badge={badge}
+          variant={variant}
           onClick={props.onClick}
         />
         <ul>
@@ -162,24 +176,53 @@ function TagTree(props){
 }
 
 function TagTreeNode(props){
+  const dropDownItems = ["Rename", "Delete", "Focus", "Hide"];
   return(
     <Draggable key = {""+props.tag.index} draggableId={props.tag._id} index={props.tag.index}>
       {(provided) => (
         <li ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps}>
-          <TagButton tag={props.tag._id} className={props.className} onClick={props.onClick}/>
+          <TagSplitButton
+            badge = {props.badge} onClick={props.onClick} dropDownItems={dropDownItems}
+            tag={props.tag._id} variant={props.variant}
+          />
         </li>
       )}
     </Draggable>
   );
 }
 
+function TagSplitButton(props){
+  var title;
+  if(props.badge=="false"){
+    title = props.tag;
+  }
+  else{
+    var badge = <Badge variant="light"> {props.badge} </Badge>;
+    title = React.createElement('span', null, [(props.tag+" "), badge]);
+  }
+  return(
+    <SplitButton
+      variant={props.variant}
+      onClick={(e)=>props.onClick(e, props.tag)}
+      size="sm"
+      title={title}
+    >
+      {props.dropDownItems.map((item, index) => {
+        return (<Dropdown.Item eventKey={index}> {item} </Dropdown.Item>);
+      })}
+    </SplitButton>
+  );
+}
+
 function TagButton(props){
   return(
-    <button
+    <Button
       onClick={(e)=>props.onClick(e, props.tag)}
-      className={props.className}
-    > {props.tag} </button>
+      variant={props.variant}
+      size="sm"
+      className={styles.tagbutton}
+    > {props.tag} </Button>
   )
 }
 
-export {TagButton}
+export {TagSplitButton, TagButton};

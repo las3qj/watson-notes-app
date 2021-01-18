@@ -1,5 +1,8 @@
 import React from 'react';
 import styles from '../styles/CreateNewPage.module.css';
+import Badge from 'react-bootstrap/Badge';
+import Button from 'react-bootstrap/Button';
+import Card from 'react-bootstrap/Card';
 
 export default function NoteSelect(props){
   return(
@@ -8,6 +11,7 @@ export default function NoteSelect(props){
         onInputChange={props.onSearchInputChange}
         onKeyPress={props.onSearchKeyPress}
         searchInput={props.searchInput}
+        curQuery = {props.curQuery}
       />
       <NoteList notes={props.notes} onClick={props.onNoteClick}/>
     </div>
@@ -17,11 +21,14 @@ export default function NoteSelect(props){
 function TopBar(props){
   return(
     <div className={styles.topbar}>
-      <label htmlFor="search" className={styles.toplabels}> search: </label>
+      <Badge variant="light"> Search </Badge>
       <input
-        type="text"  id="search" className="searchInput" value={props.searchInput}
+        type="text"  id="search" className="searchbar" value={props.searchInput}
         onChange={props.onInputChange} onKeyPress={props.onKeyPress}
       />
+      <Badge variant="primary">
+        {props.curQuery.external}
+      </Badge>
     </div>
   );
 }
@@ -30,7 +37,7 @@ function NoteList(props){
   return(
     <div className={styles.notelist}>
       {props.notes.map(note => {
-        return <NoteCard note={note} onClick={props.onClick}/>;
+        return <NewNoteCard note={note} onClick={props.onClick}/>;
       })}
     </div>
   );
@@ -44,4 +51,18 @@ function NoteCard(props){
       </div>
     </div>
   )
+}
+
+function NewNoteCard(props){
+  var content = props.note.content.slice();
+  if(content.length > 225){
+    content = content.substring(0, 222).concat("...");
+  }
+  return(
+    <Card onClick={e=> props.onClick(e, props.note)}>
+      <Card.Body>
+        <Card.Text> {content} </Card.Text>
+      </Card.Body>
+    </Card>
+  );
 }
