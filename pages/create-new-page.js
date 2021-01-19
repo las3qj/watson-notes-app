@@ -14,10 +14,12 @@ class CreateNewPage extends React.Component{
   //constructor
   constructor(props){
     super(props);
+    this.handleSetShowAlert=this.handleSetShowAlert.bind(this);
     this.handleNoteSelectClick=this.handleNoteSelectClick.bind(this);
     this.handlePublishClick=this.handlePublishClick.bind(this);
     this.handleSaveClick=this.handleSaveClick.bind(this);
     this.handleNewNoteClick=this.handleNewNoteClick.bind(this);
+    this.handleCollapseClick=this.handleCollapseClick.bind(this);
     this.handleNoteInputChange=this.handleNoteInputChange.bind(this);
     this.handleTagInputChange=this.handleTagInputChange.bind(this);
     this.handleSearchInputChange=this.handleSearchInputChange.bind(this);
@@ -46,7 +48,12 @@ class CreateNewPage extends React.Component{
       curQuery: {
         external: props.curQuery.external,
         internal: props.curQuery.internal
-      }
+      },
+      searchAlert: {
+        alertMessage: "None",
+        showAlert: false
+      },
+      currentTheme: 2
     };
   }
 
@@ -89,6 +96,26 @@ class CreateNewPage extends React.Component{
   }
 
   //BUTTON / NOTE ONCLICK HANDLERS ~~~~~~~~~~~~~~~~~~
+  //when an alert is minimized
+  handleSetShowAlert(bool, message="None"){
+    this.setState({searchAlert: {alertMessage: message, showAlert: bool}});
+  }
+  //when a collapse icon is clicked
+  handleCollapseClick(event, tag){
+    var tagsTable = this.state.tagsTable;
+    if(tagsTable[tag].children.length==0){
+      return;
+    }
+    else{
+      if(tagsTable[tag].isCollapsed){
+        tagsTable[tag].isCollapsed = 0;
+      }
+      else{
+        tagsTable[tag].isCollapsed = 1;
+      }
+    }
+    this.setState({tagsTable: tagsTable});
+  }
   //when the save button is clicked
   async handleSaveClick(event){
     var curNotes = this.state.curNotes.slice();
@@ -457,19 +484,21 @@ class CreateNewPage extends React.Component{
         };
         newExt = "All notes";
       }
+      else{
+        this.handleSetShowAlert(true, "Command \""+results.command+"\" not recognized");
+        return;
+      }
     }
     else if(type == "tag"){
       const key = caseInsensitiveSearch(results.tag, tagsTable);
       if(typeof key === 'undefined'){
         //REVIEW
-        this.setState({searchInput: "tag: "+results.tag+" not found"});
+        this.handleSetShowAlert(true, "Tag \""+results.tag+"\" not found");
         return;
       }
       //if the tag has children, add those to a search query
       else if(tagsTable[key].children.length>0){
-        console.log("Made it here");
         const res = handleSearchRecurseChildren(key, tagsTable);
-        console.log(res);
         promise = fetch('http://localhost:3000/api/mongo-getnotefromtags', {
           method: 'POST',
           headers: {
@@ -502,6 +531,7 @@ class CreateNewPage extends React.Component{
     else if(type == "ortags" || type == "andtags"){
       const tagsArray = results.tags;
       var newTags = [];
+      var missedTags = [];
       newExt = "";
       //iterate, double-checking that these tags are valid
       for(var n=0; n<tagsArray.length; n++){
@@ -527,7 +557,7 @@ class CreateNewPage extends React.Component{
             }
           }
           else{
-            console.log("tag "+tagsArray[n][m]+" not found");
+            missedTags.push(tagsArray[n][m]);
           }
         }
       }
@@ -539,8 +569,19 @@ class CreateNewPage extends React.Component{
       }
       //if no tags remain...
       if(newTags.length==0){
-        console.log("no valid tags to search");
+        this.handleSetShowAlert(true, "No valid tags in search.");
         return;
+      }
+      else if(missedTags.length>0){
+        var alert = "Tags ";
+        for(var n=0; n<missedTags.length; n++){
+          if(n!=0){
+            alert = alert.concat(", ");
+          }
+          alert = alert.concat("\""+missedTags[n]+"\"");
+        }
+        alert = alert.concat(" not found.");
+        this.handleSetShowAlert(true, alert);
       }
       promise = fetch('http://localhost:3000/api/mongo-getnotefromtags', {
         method: 'POST',
@@ -606,13 +647,14 @@ class CreateNewPage extends React.Component{
         //call handleMoveTag
         const newRoots = handleMoveTag(draggedTagID, targetTagID, tagsTable, rootTags.slice());
         this.setState({
-          rootTags: newRoots
+          rootTags: newRoots,
+          tagsTable: tagsTable
         });
         return;
       }
     }
     else{
-      if(!result.destination){
+      if(!result.destination || result.destination.index==result.source.index){
         return;
       }
       //add tag as Root tag if attempting to drop anywhere
@@ -655,7 +697,7 @@ class CreateNewPage extends React.Component{
   //RENDER METHOD ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   render(){
     return (
-      <div className={styles.layout}>
+      <div className={"layout"}>
         <SplitPane
           className = {styles.splitpane}
           styleleft = {styles.splitpaneleft1}
@@ -667,8 +709,12 @@ class CreateNewPage extends React.Component{
               onNoteClick = {this.handleNoteSelectClick}
               onSearchInputChange = {this.handleSearchInputChange}
               onSearchKeyPress = {this.handleSearchKeyPress}
+              showAlert = {this.state.searchAlert.showAlert}
+              setShowAlert = {this.handleSetShowAlert}
+              alertMessage = {this.state.searchAlert.alertMessage}
               searchInput = {this.state.searchInput}
               curQuery = {this.state.curQuery}
+              currentTheme = {this.state.currentTheme}
             />
           }
 
@@ -689,6 +735,7 @@ class CreateNewPage extends React.Component{
                   handlePublishClick = {this.handlePublishClick}
                   handleSaveClick = {this.handleSaveClick}
                   handleNewNoteClick = {this.handleNewNoteClick}
+                  currentTheme = {this.state.currentTheme}
                 />
               }
 
@@ -699,8 +746,10 @@ class CreateNewPage extends React.Component{
                   rootTags = {this.state.rootTags}
                   noteTags = {this.state.note.tags}
                   onExClick = {this.handleETagClick}
+                  onCollapseClick={this.handleCollapseClick}
                   onWsClick = {this.handleWTagClick}
                   wRecs = {this.state.wRecs}
+                  currentTheme = {this.state.currentTheme}
                 />
               }
             />
@@ -745,33 +794,28 @@ function handleMoveTag(draggedTagID, targetTagID, tagsTable, rootTags){
 function handleRemoveTagRefs(draggedTagID, tagsTable, rootTags){
   const draggedTag = tagsTable[draggedTagID];
   //for every child, updating parent to be the draggedTag's parent
+
+  //if not collapsed
   var newChildren = [];
-  for(var n=0; n<draggedTag.children.length; n++){
-    tagsTable[draggedTag.children[n]].parent = draggedTag.parent;
-    newChildren.push(draggedTag.children[n]);
+  if(!draggedTag.isCollapsed){
+    for(var n=0; n<draggedTag.children.length; n++){
+      tagsTable[draggedTag.children[n]].parent = draggedTag.parent;
+      newChildren.push(draggedTag.children[n]);
+    }
+    //update the parent field for all those children in the DB
+    fetch('http://localhost:3000/api/mongo-updateparents', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({prevP: draggedTagID, newP: draggedTag.parent})
+    });
   }
-  //update the parent field for all those children in the DB
-  fetch('http://localhost:3000/api/mongo-updateparents', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({prevP: draggedTagID, newP: draggedTag.parent})
-  });
   if(draggedTag.parent==null){
     const ind = rootTags.findIndex(el => el == draggedTagID);
     //const args = [ind, 1].concat(newChildren);
     //rootTags.splice.apply(undefined, args);
     rootTags.splice(ind, 1, ...newChildren);
-    if(newChildren.size>0){
-      fetch('http://localhost:3000/api/mongo-inserttags', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({tags: newChildren})
-      });
-    }
   }
   else{
     var children = tagsTable[draggedTag.parent].children.slice();
@@ -792,7 +836,9 @@ function handleRemoveTagRefs(draggedTagID, tagsTable, rootTags){
 //inserts draggedTag as a child of targetTag when draggedTag IS in tagsTable
 function handleReInsertTag(draggedTagID, targetTagID, tagsTable, rootTags){
   tagsTable[draggedTagID].parent = targetTagID;
-  tagsTable[draggedTagID].children = [];
+  if(!tagsTable[draggedTagID].isCollapsed){
+    tagsTable[draggedTagID].children = [];
+  }
   const newT = tagsTable[draggedTagID];
   fetch('http://localhost:3000/api/mongo-updatetag', {
     method: 'POST',
@@ -880,8 +926,10 @@ function handleRefreshIndices(tagsTable, roots){
     tagsTable[tag].index=index;
     var nextI = index+1;
     const children = tagsTable[tag].children;
-    for(var o=0; o<children.length; o++){
-      nextI = helperRecurseIndices(children[o], nextI)
+    if(!tagsTable[tag].isCollapsed){
+      for(var o=0; o<children.length; o++){
+        nextI = helperRecurseIndices(children[o], nextI)
+      }
     }
     return nextI;
   }

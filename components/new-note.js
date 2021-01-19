@@ -15,6 +15,7 @@ export default function NewNote(props){
         onTagInputChange={props.onTagInputChange}
         tagInput={props.tagInput}
         tags={props.note.tags}
+        currentTheme={props.currentTheme}
         />
       <NoteTextBox
         content= {props.note.content}
@@ -25,6 +26,7 @@ export default function NewNote(props){
         publishOnClick={props.handlePublishClick}
         handleSaveClick = {props.handleSaveClick}
         handleNewNoteClick = {props.handleNewNoteClick}
+        currentTheme={props.currentTheme}
       />
     </div>
   );
@@ -36,6 +38,7 @@ function TopBar(props){
     return (
       <TagButton
         variant="success"
+        currentTheme={props.currentTheme}
         onClick={props.onClick}
         tag={tag}
       />
@@ -69,9 +72,9 @@ function NoteTextBox(props){
 function BottomBar(props){
   return(
     <div className={"buttonbar"}>
-      <Button variant="primary" onClick={props.handleSaveClick} disabled={!props.unsavedChanges}> Save changes </Button>
+      <Button variant={"primary-"+props.currentTheme} onClick={props.handleSaveClick} disabled={!props.unsavedChanges}> Save changes </Button>
       <Button variant="secondary" onClick={props.handleNewNoteClick}> New note </Button>
-      <Button variant="primary" onClick={props.publishOnClick}> Analyze </Button>
+      <Button variant={"primary-"+props.currentTheme} onClick={props.publishOnClick}> Analyze </Button>
     </div>
   )
 }

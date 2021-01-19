@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useState} from 'react';
 import styles from '../styles/CreateNewPage.module.css';
 import { caseInsensitiveSearch } from '../util/string-parsing.js';
 import { DragDropContext, Droppable, Draggable, resetServerContext } from 'react-beautiful-dnd';
@@ -6,6 +6,7 @@ import SplitButton from 'react-bootstrap/SplitButton';
 import Button from 'react-bootstrap/Button';
 import Dropdown from 'react-bootstrap/Dropdown';
 import Badge from 'react-bootstrap/Badge';
+import Image from 'react-bootstrap/Image';
 
 //Expected props: rootsTags, tagsTable, noteTags
 export default function TagPanel(props){
@@ -17,11 +18,14 @@ export default function TagPanel(props){
         tagsTable={props.tagsTable}
         noteTags={props.noteTags}
         onClick={props.onExClick}
+        onCollapseClick={props.onCollapseClick}
+        currentTheme={props.currentTheme}
       />
       <WatsonTags
         size = {Object.keys(props.tagsTable).length}
         onClick = {props.onWsClick}
         wRecs = {wRecs}
+        currentTheme={props.currentTheme}
       />
     </DragDropContext>
   );
@@ -72,6 +76,8 @@ function ExtantTags(props){
         tagsTable={props.tagsTable}
         noteTags={props.noteTags}
         onClick={props.onClick}
+        onCollapseClick={props.onCollapseClick}
+        currentTheme={props.currentTheme}
       />
     </div>
   );
@@ -91,6 +97,7 @@ function WatsonTags(props){
               tag={dTag._id}
               badge={dTag.eTagMatch ? "!" : "false"}
               dropDownItems={dropDownItems}
+              currentTheme={props.currentTheme}
             />
           </li>
         )}
@@ -129,7 +136,7 @@ function TagTree(props){
     <div>
       <Droppable droppableId="extantTree" isCombineEnabled={true}>
         {(provided) => (
-          <ul {...provided.droppableProps} ref={provided.innerRef}>
+          <ul className="treelist" {...provided.droppableProps} ref={provided.innerRef}>
             {results}
           </ul>
         )}
@@ -141,9 +148,11 @@ function TagTree(props){
     const myTag = tagsTable[tag];
     var myResults = [];
     //loop through children to add to results
-    for(var n=0; n<myTag.children.length; n++){
-      const res = helperTreeRecurse(myTag.children[n]);
-      myResults.push(res);
+    if(!myTag.isCollapsed){
+      for(var n=0; n<myTag.children.length; n++){
+        const res = helperTreeRecurse(myTag.children[n]);
+        myResults.push(res);
+      }
     }
     const data = tagsTable[tag];
     var variant;
@@ -163,11 +172,14 @@ function TagTree(props){
       <div>
         <TagTreeNode
           tag={data}
+          currentTheme={props.currentTheme}
           badge={badge}
           variant={variant}
           onClick={props.onClick}
+          onCollapseClick={props.onCollapseClick}
+          icon={myTag.children.length ? (data.isCollapsed ? <Image src="/arrow-right.png" rounded/> : <Image src="/arrow-down.png" rounded/>) : "•"}
         />
-        <ul>
+        <ul className="treelist">
           {myResults}
         </ul>
       </div>
@@ -180,10 +192,11 @@ function TagTreeNode(props){
   return(
     <Draggable key = {""+props.tag.index} draggableId={props.tag._id} index={props.tag.index}>
       {(provided) => (
-        <li ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps}>
+        <li className="customicon" ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps}>
+          <span className="icon" onClick={(e) => props.onCollapseClick(e, props.tag._id)}> {props.icon} </span>
           <TagSplitButton
             badge = {props.badge} onClick={props.onClick} dropDownItems={dropDownItems}
-            tag={props.tag._id} variant={props.variant}
+            tag={props.tag._id} variant={props.variant} currentTheme={props.currentTheme}
           />
         </li>
       )}
@@ -198,11 +211,12 @@ function TagSplitButton(props){
   }
   else{
     var badge = <Badge variant="light"> {props.badge} </Badge>;
+    //REVIEW: MAKE THIS A DIV?
     title = React.createElement('span', null, [(props.tag+" "), badge]);
   }
   return(
     <SplitButton
-      variant={props.variant}
+      variant={props.variant+"-"+props.currentTheme}
       onClick={(e)=>props.onClick(e, props.tag)}
       size="sm"
       title={title}
@@ -218,7 +232,7 @@ function TagButton(props){
   return(
     <Button
       onClick={(e)=>props.onClick(e, props.tag)}
-      variant={props.variant}
+      variant={props.variant+"-"+props.currentTheme}
       size="sm"
       className={styles.tagbutton}
     > {props.tag} </Button>
