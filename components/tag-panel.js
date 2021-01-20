@@ -7,27 +7,64 @@ import Button from 'react-bootstrap/Button';
 import Dropdown from 'react-bootstrap/Dropdown';
 import Badge from 'react-bootstrap/Badge';
 import Image from 'react-bootstrap/Image';
+import Modal from 'react-bootstrap/Modal';
 
 //Expected props: rootsTags, tagsTable, noteTags
 export default function TagPanel(props){
+  //modal code/state
+  const [show, setShow] = useState(-1);
+  const handleClose = () => setShow(-1);
+  const [onSave, setOnSave] = useState(() => handleClose);
+  const [header, setHeader] = useState("null");
+  const [body, setBody] = useState("null");
+  const [buttonText, setButtonText] = useState("null");
+  const [input, setInput] = useState("Button name");
+  const handleInputChange = (text) => setInput(text);
+  const handleShow = (item) => {
+    if(item == "Rename"){
+      setShow(0);
+      setHeader("Rename");
+      setButtonText("Save");
+      setOnSave((old, newT) => props.handleModalRename(old, newT));
+      setBody(<input value={input} onChange={(e)=>handleInputChange(e.target.value)}/>);
+    }
+  }
   var wRecs = parseTags(props.wRecs.slice(), props.noteTags.slice(), props.tagsTable);
   return(
-    <DragDropContext onDragEnd={props.onDragEnd} className={styles.tagpanel}>
-      <ExtantTags
-        rootTags={props.rootTags}
-        tagsTable={props.tagsTable}
-        noteTags={props.noteTags}
-        onClick={props.onExClick}
-        onCollapseClick={props.onCollapseClick}
-        currentTheme={props.currentTheme}
-      />
-      <WatsonTags
-        size = {Object.keys(props.tagsTable).length}
-        onClick = {props.onWsClick}
-        wRecs = {wRecs}
-        currentTheme={props.currentTheme}
-      />
-    </DragDropContext>
+    <div className={styles.tagpanel}>
+      {(show>-1) && <Modal show={(show>-1)} onHide={handleClose} size="sm" centered>
+        <Modal.Header closeButton>
+          <Modal.Title>{header}</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>{body}</Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={handleClose}>
+            Close
+          </Button>
+          <Button variant={"primary-"+props.currentTheme} onClick={onSave}>
+            {buttonText}
+          </Button>
+        </Modal.Footer>
+      </Modal>}
+      <DragDropContext onDragEnd={props.onDragEnd}>
+        <ExtantTags
+          rootTags={props.rootTags}
+          tagsTable={props.tagsTable}
+          noteTags={props.noteTags}
+          onClick={props.onExClick}
+          sendAheadInput={handleInputChange}
+          onDropDownSelect={handleShow}
+          onCollapseClick={props.onCollapseClick}
+          currentTheme={props.currentTheme}
+        />
+        <WatsonTags
+          size = {Object.keys(props.tagsTable).length}
+          onClick = {props.onWsClick}
+          wRecs = {wRecs}
+          currentTheme={props.currentTheme}
+        />
+      </DragDropContext>
+    </div>
   );
 }
 
@@ -76,6 +113,8 @@ function ExtantTags(props){
         tagsTable={props.tagsTable}
         noteTags={props.noteTags}
         onClick={props.onClick}
+        sendAheadInput={props.sendAheadInput}
+        onDropDownSelect={props.onDropDownSelect}
         onCollapseClick={props.onCollapseClick}
         currentTheme={props.currentTheme}
       />
@@ -176,6 +215,8 @@ function TagTree(props){
           badge={badge}
           variant={variant}
           onClick={props.onClick}
+          sendAheadInput={props.sendAheadInput}
+          onDropDownSelect={props.onDropDownSelect}
           onCollapseClick={props.onCollapseClick}
           icon={myTag.children.length ? (data.isCollapsed ? <Image src="/arrow-right.png" rounded/> : <Image src="/arrow-down.png" rounded/>) : "•"}
         />
@@ -197,6 +238,7 @@ function TagTreeNode(props){
           <TagSplitButton
             badge = {props.badge} onClick={props.onClick} dropDownItems={dropDownItems}
             tag={props.tag._id} variant={props.variant} currentTheme={props.currentTheme}
+            onDropDownSelect={props.onDropDownSelect} sendAheadInput={props.sendAheadInput}
           />
         </li>
       )}
@@ -218,11 +260,15 @@ function TagSplitButton(props){
     <SplitButton
       variant={props.variant+"-"+props.currentTheme}
       onClick={(e)=>props.onClick(e, props.tag)}
+      onMouseOver={props.sendAheadInput!=null? ((e)=>props.sendAheadInput(props.tag)) : null}
       size="sm"
       title={title}
     >
       {props.dropDownItems.map((item, index) => {
-        return (<Dropdown.Item eventKey={index}> {item} </Dropdown.Item>);
+        return (<Dropdown.Item eventKey={index}
+          onSelect={(key,event) => {
+            props.onDropDownSelect(item);
+          }} > {item} </Dropdown.Item>);
       })}
     </SplitButton>
   );

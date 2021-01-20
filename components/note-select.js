@@ -6,7 +6,6 @@ import Card from 'react-bootstrap/Card';
 import Alert from 'react-bootstrap/Alert';
 
 export default function NoteSelect(props){
-  const [active, setActive] = useState(-1);
   return(
     <div className={styles.noteselect}>
       <TopBar
@@ -17,8 +16,8 @@ export default function NoteSelect(props){
         currentTheme={props.currentTheme}
       />
       <NoteList notes={props.notes} show = {props.showAlert} setShow = {props.setShowAlert}
-      alertMessage = {props.alertMessage} currentTheme={props.currentTheme}
-      active={active} setActive={setActive} onClick={props.onNoteClick}/>
+      alertMessage = {props.alertMessage} currentTheme={props.currentTheme} onPin = {props.onPin}
+      onClick={props.onNoteClick}/>
     </div>
   )
 }
@@ -46,9 +45,9 @@ function NoteList(props){
           <p> {props.alertMessage} </p>
         </Alert>
       }
-      {props.notes.map((note, index) => {
+      {(props.notes.pins.slice().concat(props.notes.fromQuery.slice())).map((note, index) => {
         return <NoteCard
-          note={note} active={props.active} setActive={props.setActive}
+          note={note} active={props.active} setActive={props.setActive} onPin={props.onPin}
           index={index} onClick={props.onClick} currentTheme={props.currentTheme}/>;
       })}
     </div>
@@ -61,21 +60,26 @@ function NoteCard(props){
   if(content.length > 225){
     content = content.substring(0, 222).concat("...");
   }
-  if(props.active == props.index){
+  //REVIEW, add isactive to note state similarly to ispinned
+  if(props.note.isActive || props.note.isPinned){
     return(
-      <Card border={"primary-"+props.currentTheme} bg={"primary-"+props.currentTheme} onClick={e=> {
-        props.setActive(props.index)
-        props.onClick(e, props.note)} }>
+      //REVIEW, make sure this style is accounted for in theme2
+      <Card border={(props.note.isActive?"primary-":"success-")+props.currentTheme}
+        bg={(props.note.isActive?"primary-":"success-")+props.currentTheme}
+        onClick={e=> {props.onClick(e, props.note)} }>
         <Card.Body>
+          <Card.Subtitle>
+            <Button size="sm" variant={(props.note.isPinned?"success-":"primary-")+props.currentTheme} onClick={e=>props.onPin(e, props.note)}>
+              {props.note.isPinned ? "Unpin" : "Pin"}
+            </Button>
+          </Card.Subtitle>
           <Card.Text> {content} </Card.Text>
         </Card.Body>
       </Card>
     );
   }
   return(
-    <Card onClick={e=> {
-      props.setActive(props.index)
-      props.onClick(e, props.note)} }>
+    <Card onClick={e=> {props.onClick(e, props.note)} }>
       <Card.Body>
         <Card.Text> {content} </Card.Text>
       </Card.Body>

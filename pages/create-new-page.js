@@ -14,6 +14,7 @@ class CreateNewPage extends React.Component{
   //constructor
   constructor(props){
     super(props);
+    this.handlePinClick=this.handlePinClick.bind(this);
     this.handleSetShowAlert=this.handleSetShowAlert.bind(this);
     this.handleNoteSelectClick=this.handleNoteSelectClick.bind(this);
     this.handlePublishClick=this.handlePublishClick.bind(this);
@@ -44,7 +45,10 @@ class CreateNewPage extends React.Component{
       tagsTable: props.tagsTable,
       rootTags: props.rootTags,
       wRecs: [],
-      curNotes: props.curNotes,
+      curNotes: {
+        fromQuery: props.curNotes,
+        pins: []
+      },
       curQuery: {
         external: props.curQuery.external,
         internal: props.curQuery.internal
@@ -96,9 +100,75 @@ class CreateNewPage extends React.Component{
   }
 
   //BUTTON / NOTE ONCLICK HANDLERS ~~~~~~~~~~~~~~~~~~
+  handleModalRename(old, newT){
+    handleRenameTag(old, newT, this.state.tagsTable, this.state.rootTags.slice());
+  }
   //when an alert is minimized
   handleSetShowAlert(bool, message="None"){
     this.setState({searchAlert: {alertMessage: message, showAlert: bool}});
+  }
+  handlePinClick(event, note){
+    event.stopPropagation();
+    var newNotes = this.state.curNotes.fromQuery.slice();
+    var newPins = this.state.curNotes.pins.slice();
+    const mainNote = this.state.note;
+    var newMainNote = mainNote;
+
+    if(!note.isPinned){
+      if(note.isActive){
+        newMainNote = {
+          _id: mainNote._id,
+          content: mainNote.content,
+          tags: mainNote.tags,
+          unsavedChanges: mainNote.unsavedChanges,
+          wRecs: mainNote.wRecs,
+          isPinned: 1
+        };
+      }
+      const newNote = {
+        _id: note._id,
+        content: note.content,
+        tags: note.tags,
+        wRecs: note.wRecs,
+        isActive: note.isActive,
+        isPinned: 1
+      };
+      const ind = newNotes.findIndex(el => el._id == note._id);
+      newNotes.splice(ind, 1);
+      newPins.push(newNote);
+    }
+    else{
+      if(note.isActive){
+        newMainNote = {
+          _id: mainNote._id,
+          content: mainNote.content,
+          tags: mainNote.tags,
+          unsavedChanges: mainNote.unsavedChanges,
+          wRecs: mainNote.wRecs,
+          isPinned: 0
+        };
+      }
+      const newNote = {
+        _id: note._id,
+        content: note.content,
+        tags: note.tags,
+        wRecs: note.wRecs,
+        isActive: note.isActive,
+        isPinned: 0
+      };
+      const ind = newPins.findIndex(el => el._id == note._id);
+      newPins.splice(ind, 1);
+      if(handleCheckAgainstQuery(note.tags.slice(), this.state.curQuery)){
+        newNotes.push(newNote);
+      }
+    }
+    this.setState({
+      note: newMainNote,
+      curNotes: {
+        fromQuery: newNotes,
+        pins: newPins }
+    });
+
   }
   //when a collapse icon is clicked
   handleCollapseClick(event, tag){
@@ -118,28 +188,38 @@ class CreateNewPage extends React.Component{
   }
   //when the save button is clicked
   async handleSaveClick(event){
-    var curNotes = this.state.curNotes.slice();
+    var curNotes = this.state.curNotes.fromQuery.slice();
+    var pins = this.state.curNotes.pins.slice();
     const id = this.state.note._id;
-    const ind = curNotes.findIndex(note => note._id == this.state.note._id);
+    var qInd = -1;
+    var pInd = pins.findIndex(note => note._id == this.state.note._id);
+    if(pInd<0){
+      qInd = curNotes.findIndex(note => note._id == this.state.note._id);
+    }
+
     //if it should be in curNotes
     if(handleCheckAgainstQuery(this.state.note.tags, this.state.curQuery)){
       //but its not
-      if(ind == -1){
+      if(qInd == pInd == -1){
         curNotes.push(this.state.note);
-        this.setState({curNotes: curNotes});
+        this.setState({curNotes: {fromQuery: curNotes, pins: this.state.curNotes.pins}});
       }
       //if it is, update it
+      else if(qInd>-1){
+        curNotes[qInd] = this.state.note;
+        this.setState({curNotes: {fromQuery: curNotes, pins: this.state.curNotes.pins}});
+      }
       else{
-        curNotes[ind] = this.state.note;
-        this.setState({curNotes: curNotes});
+        pins[pInd] = this.state.note;
+        this.setState({curNotes: {fromQuery: this.state.curNotes.fromQuery, pins: pins}});
       }
     }
     //if it should NOT be in curNotes
     else{
       //but it is
-      if(ind > -1){
+      if(qInd > -1){
         curNotes.splice(ind, 1);
-        this.setState({curNotes: curNotes});
+        this.setState({curNotes: {fromQuery: curNotes, pins: this.state.curNotes.pins}});
       }
       //if it isnt, do nothing
     }
@@ -236,7 +316,7 @@ class CreateNewPage extends React.Component{
       wRecs: this.state.wRecs,
       unsavedChanges: 0
     };
-    var cNotes = this.state.curNotes;
+    var cNotes = this.state.curNotes.fromQuery.slice();
     //checks current note against current query
     if(handleCheckAgainstQuery(newNote.tags, this.state.curQuery)){
       cNotes.push(newNote);
@@ -244,20 +324,64 @@ class CreateNewPage extends React.Component{
 
     this.setState({
       note: newNote,
-      curNotes: cNotes
+      curNotes: {fromQuery: cNotes, pins: this.state.curNotes.pins}
     });
   }
   //when a new note is clicked/selected from note-select
   handleNoteSelectClick(event, note){
+    if(note.isActive){
+      return;
+    }
     //reset current match flags in wRecs & extant tags
     handleResetMatches(this.state.tagsTable, this.state.note.tags, this.state.wRecs);
+    var curNotes = this.state.curNotes.fromQuery.slice();
+    var pins = this.state.curNotes.pins.slice();
+    if(this.state.note.isPinned){
+      var index = pins.findIndex(el => el._id==this.state.note._id);
+      var updatedNote = {
+        _id: pins[index]._id,
+        content: pins[index].content,
+        tags: pins[index].tags,
+        wRecs: pins[index].wRecs,
+        isActive: 0,
+        isPinned: 1
+      }
+      pins[index] = updatedNote;
+    }
+    else if(this.state.note._id!=null && curNotes.findIndex(el => el._id==this.state.note._id)!=-1){
+      var index = curNotes.findIndex(el => el._id==this.state.note._id);
+      var updatedNote = {
+        _id: curNotes[index]._id,
+        content: curNotes[index].content,
+        tags: curNotes[index].tags,
+        wRecs: curNotes[index].wRecs,
+        isActive: 0,
+        isPinned: 0
+      }
+      curNotes[index] = updatedNote;
+    }
+    var newNote = {
+      _id: note._id,
+      content: note.content,
+      tags: note.tags,
+      wRecs: note.wRecs,
+      unsavedChanges: 0,
+      isPinned: note.isPinned,
+      isActive: 1
+    };
+    if(note.isPinned){
+      var ind = pins.findIndex(el => el._id == note._id);
+      pins[ind] = newNote;
+    }
+    else{
+      var ind = curNotes.findIndex(el => el._id == note._id);
+      curNotes[ind] = newNote;
+    }
     this.setState({
-      note: {
-        _id: note._id,
-        content: note.content,
-        tags: note.tags,
-        wRecs: note.wRecs,
-        unsavedChanges: 0
+      note: newNote,
+      curNotes: {
+        fromQuery: curNotes,
+        pins: pins
       },
       wRecs: note.wRecs
     });
@@ -484,6 +608,14 @@ class CreateNewPage extends React.Component{
         };
         newExt = "All notes";
       }
+      else if(results.command == "pins" || results.command == "pinned" || results.command == "pin"){
+        newInt = {
+          type: "command",
+          command: "pins"
+        };
+        newExt = "Pinned notes";
+        var empty = [];
+      }
       else{
         this.handleSetShowAlert(true, "Command \""+results.command+"\" not recognized");
         return;
@@ -596,11 +728,28 @@ class CreateNewPage extends React.Component{
       };
     }
     //update notes
+    if(typeof promise === 'undefined'){
+      handleResetMatches(this.state.tagsTable, this.state.note.tags, this.state.wRecs);
+      this.setState({
+        curNotes: {
+          fromQuery: [],
+          pins: this.state.curNotes.pins
+        },
+        curQuery: {
+          external: newExt,
+          internal: newInt
+        }
+      });
+      return;
+    }
     promise.then(res => res.json())
     .then(notes => {
       handleResetMatches(this.state.tagsTable, this.state.note.tags, this.state.wRecs);
       this.setState({
-        curNotes: notes,
+        curNotes: {
+          fromQuery: notes,
+          pins: this.state.curNotes.pins
+        },
         curQuery: {
           external: newExt,
           internal: newInt
@@ -707,6 +856,7 @@ class CreateNewPage extends React.Component{
             <NoteSelect
               notes = {this.state.curNotes}
               onNoteClick = {this.handleNoteSelectClick}
+              onPin = {this.handlePinClick}
               onSearchInputChange = {this.handleSearchInputChange}
               onSearchKeyPress = {this.handleSearchKeyPress}
               showAlert = {this.state.searchAlert.showAlert}
@@ -747,6 +897,7 @@ class CreateNewPage extends React.Component{
                   noteTags = {this.state.note.tags}
                   onExClick = {this.handleETagClick}
                   onCollapseClick={this.handleCollapseClick}
+                  handleModalRename={this.handleModalRename}
                   onWsClick = {this.handleWTagClick}
                   wRecs = {this.state.wRecs}
                   currentTheme = {this.state.currentTheme}
@@ -781,7 +932,7 @@ function handleMoveTag(draggedTagID, targetTagID, tagsTable, rootTags){
   //two steps to 'delete':
   // 1: give children to parent (make roots if a root tag)
   // 2: give parent to children (null if a root tag)
-  rootTags = handleRemoveTagRefs(draggedTagID, tagsTable, rootTags.slice());
+  handleRemoveTagRefs(draggedTagID, tagsTable, rootTags.slice());
   //two steps to 'add':
   // 1: set new parent (targetTagID)
   // 2: add to parent's children list
@@ -791,25 +942,17 @@ function handleMoveTag(draggedTagID, targetTagID, tagsTable, rootTags){
 }
 //handles api calls for removing references to draggedTagID either in parent
 //or children fields of other tags, updates their DB entries, but not the entry of draggedTag
-function handleRemoveTagRefs(draggedTagID, tagsTable, rootTags){
+function handleRemoveTagRefs(draggedTagID, tagsTable, rootTags, fromDelete=0){
   const draggedTag = tagsTable[draggedTagID];
   //for every child, updating parent to be the draggedTag's parent
-
-  //if not collapsed
+  //if not collapsed, that is (or if fromDelete)
   var newChildren = [];
-  if(!draggedTag.isCollapsed){
+  if(!draggedTag.isCollapsed || fromDelete){
     for(var n=0; n<draggedTag.children.length; n++){
       tagsTable[draggedTag.children[n]].parent = draggedTag.parent;
       newChildren.push(draggedTag.children[n]);
     }
-    //update the parent field for all those children in the DB
-    fetch('http://localhost:3000/api/mongo-updateparents', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({prevP: draggedTagID, newP: draggedTag.parent})
-    });
+    handleUpdateParentsReq(draggedTagID, draggedTag.parent);
   }
   if(draggedTag.parent==null){
     const ind = rootTags.findIndex(el => el == draggedTagID);
@@ -823,15 +966,30 @@ function handleRemoveTagRefs(draggedTagID, tagsTable, rootTags){
     children.splice(ind, 1, ...newChildren);
     tagsTable[draggedTag.parent].children = children;
     const newParent = tagsTable[draggedTag.parent];
-    fetch('http://localhost:3000/api/mongo-updatetag', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(newParent)
-    });
+    handleUpdateTagReq(newParent);
   }
   return rootTags;
+}
+//updates db tags with parent=prevP to new parent
+function handleUpdateParentsReq(prevP, newP){
+  //update the parent field for all those children in the DB
+  return fetch('http://localhost:3000/api/mongo-updateparents', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({prevP: prevP, newP: newP})
+  });
+}
+//updates db tag with new fields
+function handleUpdateTagReq(newTag){
+  return fetch('http://localhost:3000/api/mongo-updatetag', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(newTag)
+  });
 }
 //inserts draggedTag as a child of targetTag when draggedTag IS in tagsTable
 function handleReInsertTag(draggedTagID, targetTagID, tagsTable, rootTags){
@@ -880,16 +1038,20 @@ function handleInsertNewSubTag(newTag, targetTagID, tagsTable, rootTags, promise
       },
       body: JSON.stringify(target)
     });
-    fetch('http://localhost:3000/api/mongo-inserttag', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(newTag)
-    })
+    handleInsertTagReq(newTag);
   });
   handleRefreshIndices(tagsTable, rootTags);
   return;
+}
+//simply handles the api req for inserting a tags
+function handleInsertTagReq(newTag){
+  return fetch('http://localhost:3000/api/mongo-inserttag', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(newTag)
+  });
 }
 //inserts {newTag} into tagsTable as a child of {targetTag}
 //assuming newTag is not to be a rootTag
@@ -905,15 +1067,71 @@ function insertNewSubTag(newTag, targetTagID, tagsTable){
 function handleInsertNewRootTag(newTag, tagsTable, rootTags){
   tagsTable[newTag._id] = newTag;
   rootTags.push(newTag._id);
-  fetch('http://localhost:3000/api/mongo-inserttag', {
+  handleInsertTagReq(newTag);
+  handleRefreshIndices(tagsTable, rootTags);
+  return rootTags;
+}
+//handles the renaming of a tag (deleting the old tag, replacing references
+//to that tag with references to new id, updating tagsTable)
+function handleRenameTag(oldId, newId, tagsTable, rootTags){
+  handleDeleteTagReq(tagId);
+  var tagData = tagsTable[oldId];
+  var newTag = Object.assign({}, tagData, {_id: newId});
+  handleReplaceTagRefs(oldId, newId, tagsTable);
+  handleInsertTagReq(newTag);
+  delete tagsTable.oldId;
+  tagsTable[newId] = newTag;
+  if(newTag.parent==null){
+    rootTags[rootTags.findIndex(el => el._id==oldId)] = newTag;
+  }
+  handleRefreshIndices(tagsTable, rootTags);
+  return rootTags;
+}
+//handles replacing references to oldId with references to newId in children/parent fields
+function handleReplaceTagRefs(oldId, newId, tagsTable){
+  handleUpdateParentsReq(oldId, newId);
+  const parent = tagsTable[tagsTable[oldId].parent];
+  if(parent==null){
+    return;
+  }
+  var newChildren = parent.children.slice();
+  newChildren.splice(newChildren.findIndex(el => el._id == oldId), 1);
+  var newParent = Object.assign({},parent, {children: newChildren});
+  handleUpdateTagReq(newParent)
+}
+//handles the deleting of tagId from tagsTable, the DB, and other tag references
+function handleDeleteTag(tagId, tagsTable, rootTags){
+  handleDeleteTagReq(tagId);
+  rootTags = handleRemoveTagRefs(tagId, tagsTable, rootTags.slice(), 1);
+  delete tagsTable.tagId;
+  handleRefreshIndices(tagsTable, rootTags);
+  return rootTags;
+}
+//helper function for deleting tag from DB
+async function handleDeleteTagReq(tagId){
+  return fetch('http://localhost:3000/api/mongo-deletetag', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'
     },
-    body: JSON.stringify(newTag)
+    body: JSON.stringify({_id: tagId})
   });
-  handleRefreshIndices(tagsTable, rootTags);
-  return rootTags;
+}
+//ensures all note tags actually EXIST,
+//removes them if they do not, returning updated tags
+function handleCheckNoteTags(tags, tagsTable){
+  var newTags = tags.slice();
+  var changes = -1;
+  for(var n=tags.length-1; n>=0; n--){
+    if(typeof tagsTable[tags] === 'undefined'){
+      newTags.splice(n, 1);
+      changes = 1;
+    }
+  }
+  if(!changes){
+    return changes;
+  }
+  return newTags;
 }
 //refreshes the indices in tagsTable based on the roots array
 function handleRefreshIndices(tagsTable, roots){
