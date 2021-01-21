@@ -4,6 +4,8 @@ export default async (req, res) => {
   const { db } = await connectToDatabase();
   const tagsDB = db.collection("tags");
   const _id = req.body._id;
+  var ObjectId = require('mongodb').ObjectId;
+  const objid = new ObjectId(_id);
 
   const query = {
     _id: _id

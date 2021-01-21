@@ -15,9 +15,9 @@ export default function NoteSelect(props){
         curQuery = {props.curQuery}
         currentTheme={props.currentTheme}
       />
-      <NoteList notes={props.notes} show = {props.showAlert} setShow = {props.setShowAlert}
+      <NoteList curNotes={props.curNotes} pins = {props.pins}
       alertMessage = {props.alertMessage} currentTheme={props.currentTheme} onPin = {props.onPin}
-      onClick={props.onNoteClick}/>
+      onClick={props.onNoteClick} show = {props.showAlert} setShow = {props.setShowAlert}/>
     </div>
   )
 }
@@ -45,7 +45,7 @@ function NoteList(props){
           <p> {props.alertMessage} </p>
         </Alert>
       }
-      {(props.notes.pins.slice().concat(props.notes.fromQuery.slice())).map((note, index) => {
+      {(props.pins.slice().concat(props.curNotes.slice())).map((note, index) => {
         return <NoteCard
           note={note} active={props.active} setActive={props.setActive} onPin={props.onPin}
           index={index} onClick={props.onClick} currentTheme={props.currentTheme}/>;

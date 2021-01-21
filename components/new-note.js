@@ -12,6 +12,7 @@ export default function NewNote(props){
         id="1"
         onClick={props.tagBarOnClick}
         onKeyPress={props.onKeyPress}
+        tagsTable={props.tagsTable}
         onTagInputChange={props.onTagInputChange}
         tagInput={props.tagInput}
         tags={props.note.tags}
@@ -40,17 +41,17 @@ function TopBar(props){
         variant="success"
         currentTheme={props.currentTheme}
         onClick={props.onClick}
-        tag={tag}
+        tag={props.tagsTable[tag]}
       />
     );
   }
-  var tags = props.tags.slice();
+  var ids = props.tags.slice();
   return(
     <div className={styles.topbar}>
       <Badge variant="light"> Tags </Badge>
       <input type="text" onChange={props.onTagInputChange} onKeyPress={props.onKeyPress} id="tags" className="searchbar" value={props.tagInput}/>
       <span className={styles.toplabels}>
-        {tags.map(toTagButton)}
+        {ids.map(toTagButton)}
       </span>
     </div>
   );

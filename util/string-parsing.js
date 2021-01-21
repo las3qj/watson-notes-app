@@ -1,5 +1,5 @@
-function caseInsensitiveSearch(string, tagsTable){
-  const keys = Object.keys(tagsTable);
+function caseInsensitiveSearch(string, nameToId){
+  const keys = Object.keys(nameToId);
   const key = keys.find(el => el.toLowerCase() == string.toLowerCase());
   return key;
 }
@@ -22,7 +22,6 @@ function specialCharacterParse(string){
     start = ind + 1;
   }
   path.push(string.substring(start));
-  console.log("path: ",path);
   return path;
 }
 

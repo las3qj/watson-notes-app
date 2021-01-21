@@ -4,8 +4,11 @@ export default async (req, res) => {
   const { db } = await connectToDatabase();
   const tagsDB = db.collection("tags");
   const query = {};
+  const sBy = req.body;
+  //FLAG
+  const sortBy = sBy?sBy:"name";
   const options = {
-    sort: { _id: 1 }
+    sort: { [sortBy]: 1 }
   };
 
   const cursor = await tagsDB.find(query, options);

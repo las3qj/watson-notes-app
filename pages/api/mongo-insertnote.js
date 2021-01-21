@@ -6,7 +6,11 @@ export default async (req, res) => {
   const cont = req.body.content;
   const tags = req.body.tags;
   const wRecs = req.body.wRecs;
+  const _id = req.body._id;
+  var ObjectId = require('mongodb').ObjectId;
+  const objid = new ObjectId();
   const doc = {
+    _id: objid,
     content: cont,
     tags: tags,
     wRecs: wRecs};
@@ -15,7 +19,7 @@ export default async (req, res) => {
     notes.insertOne(doc)
       .then(response => {
         res.statusCode = 200;
-        res.end();
+        res.json(objid);
         resolve();
       })
       .catch(err => {

@@ -3,22 +3,26 @@ import { connectToDatabase } from "../../util/mongodb";
 export default async (req, res) => {
   const { db } = await connectToDatabase();
   const tagsDB = db.collection("tags");
-  const _id = req.body._id;
   const children = req.body.children;
-  const notes = req.body.notes;
   const parent = req.body.parent;
+  var ObjectId = require('mongodb').ObjectId;
+  const objid = new ObjectId();
+  const name = req.body.name;
   const doc = {
-    _id: _id,
+    _id: objid,
+    name: name,
     children: children,
-    notes: notes,
     parent: parent
   };
+  console.log(doc);
 
   return new Promise((resolve, reject) => {
     tagsDB.insertOne(doc)
       .then(response => {
         res.statusCode = 200;
-        res.end();
+        console.log("start");
+        res.json(objid);
+        console.log("Success");
         resolve();
       })
       .catch(err => {

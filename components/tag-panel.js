@@ -29,7 +29,7 @@ export default function TagPanel(props){
       setBody(<input value={input} onChange={(e)=>handleInputChange(e.target.value)}/>);
     }
   }
-  var wRecs = parseTags(props.wRecs.slice(), props.noteTags.slice(), props.tagsTable);
+  var wRecs = parseTags(props.wRecs.slice(), props.noteTags.slice(), props.tagsTable, props.nameToId);
   return(
     <div className={styles.tagpanel}>
       {(show>-1) && <Modal show={(show>-1)} onHide={handleClose} size="sm" centered>
@@ -50,6 +50,7 @@ export default function TagPanel(props){
         <ExtantTags
           rootTags={props.rootTags}
           tagsTable={props.tagsTable}
+          nameToId={props.nameToId}
           noteTags={props.noteTags}
           onClick={props.onExClick}
           sendAheadInput={handleInputChange}
@@ -58,7 +59,7 @@ export default function TagPanel(props){
           currentTheme={props.currentTheme}
         />
         <WatsonTags
-          size = {Object.keys(props.tagsTable).length}
+          size = {props.tagsTable.size}
           onClick = {props.onWsClick}
           wRecs = {wRecs}
           currentTheme={props.currentTheme}
@@ -68,13 +69,13 @@ export default function TagPanel(props){
   );
 }
 
-//REVIEW -- is too much to do while rendering??
-function parseTags(wRecs, noteTags, tagsTable){
+//FLAG -- is too much to do while rendering??
+function parseTags(wRecs, noteTags, tagsTable, nameToId){
   wRecs = parseNoteTags();
   wRecs = parseWRecs();
   return wRecs;
 
-  //assumes noteTgs is an array of STRINGS referring to tags
+  //assumes noteTgs is an array of ID's referring to tags
   //returns wRecs purged of matches with a tag in notetags
   function parseNoteTags(){
     var res = wRecs.slice();
@@ -82,7 +83,7 @@ function parseTags(wRecs, noteTags, tagsTable){
       //first match with tagsTable
       tagsTable[noteTags[p]].noteTagMatch = 1;
       //then with wRecs
-      const index = res.findIndex(el => el._id.toLowerCase() == noteTags[p].toLowerCase());
+      const index = res.findIndex(el => el._id.toLowerCase() == tagsTable[noteTags[p]].name.toLowerCase());
       if(index > -1){
         res.splice(index, 1);
       }
@@ -95,7 +96,7 @@ function parseTags(wRecs, noteTags, tagsTable){
       const key = caseInsensitiveSearch(wRecs[n]._id, tagsTable);
       if(typeof key !== 'undefined'){
         res[n].eTagMatch = 1;
-        tagsTable[key].wTagMatch = 1;
+        tagsTable[nameToId[key]].wTagMatch = 1;
       }
     }
     return res;
@@ -111,6 +112,7 @@ function ExtantTags(props){
       <TagTree
         rootTags={props.rootTags}
         tagsTable={props.tagsTable}
+        nameToId={props.nameToId}
         noteTags={props.noteTags}
         onClick={props.onClick}
         sendAheadInput={props.sendAheadInput}
@@ -133,7 +135,7 @@ function WatsonTags(props){
             <TagSplitButton
               variant= {dTag.eTagMatch ? "info" : "primary"}
               onClick={props.onClick}
-              tag={dTag._id}
+              tag={{name: dTag._id}}
               badge={dTag.eTagMatch ? "!" : "false"}
               dropDownItems={dropDownItems}
               currentTheme={props.currentTheme}
@@ -237,7 +239,7 @@ function TagTreeNode(props){
           <span className="icon" onClick={(e) => props.onCollapseClick(e, props.tag._id)}> {props.icon} </span>
           <TagSplitButton
             badge = {props.badge} onClick={props.onClick} dropDownItems={dropDownItems}
-            tag={props.tag._id} variant={props.variant} currentTheme={props.currentTheme}
+            tag={props.tag} variant={props.variant} currentTheme={props.currentTheme}
             onDropDownSelect={props.onDropDownSelect} sendAheadInput={props.sendAheadInput}
           />
         </li>
@@ -249,18 +251,17 @@ function TagTreeNode(props){
 function TagSplitButton(props){
   var title;
   if(props.badge=="false"){
-    title = props.tag;
+    title = props.tag.name;
   }
   else{
     var badge = <Badge variant="light"> {props.badge} </Badge>;
     //REVIEW: MAKE THIS A DIV?
-    title = React.createElement('span', null, [(props.tag+" "), badge]);
+    title = React.createElement('span', null, [(props.tag.name+" "), badge]);
   }
   return(
     <SplitButton
       variant={props.variant+"-"+props.currentTheme}
       onClick={(e)=>props.onClick(e, props.tag)}
-      onMouseOver={props.sendAheadInput!=null? ((e)=>props.sendAheadInput(props.tag)) : null}
       size="sm"
       title={title}
     >
@@ -281,7 +282,7 @@ function TagButton(props){
       variant={props.variant+"-"+props.currentTheme}
       size="sm"
       className={styles.tagbutton}
-    > {props.tag} </Button>
+    > {props.tag.name} </Button>
   )
 }
 
