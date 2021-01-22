@@ -25,6 +25,11 @@ span .badge {
   max-width: 175px;
 }
 
+ul .btn {
+  margin-bottom: 2px !important;
+  margin-top: 2px !important;
+}
+
 .buttonbar {
   width: 100%;
   height: 10%;

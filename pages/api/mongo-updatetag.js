@@ -5,7 +5,7 @@ export default async (req, res) => {
   const tagsDB = db.collection("tags");
   const id = req.body._id;
   const children = req.body.children;
-  const notes = req.body.notes;
+  const name = req.body.name;
   const parent = req.body.parent;
   var ObjectId = require('mongodb').ObjectId;
   const objid = new ObjectId(id);
@@ -15,6 +15,7 @@ export default async (req, res) => {
   };
   var update = {
     $set: {
+      name: name,
       children: children,
       parent: parent
     }

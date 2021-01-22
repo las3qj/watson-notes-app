@@ -69,6 +69,7 @@ function NoteCard(props){
         onClick={e=> {props.onClick(e, props.note)} }>
         <Card.Body>
           <Card.Subtitle>
+            {props.note.isActive ? <Badge variant="light">Editing</Badge> : null}
             <Button size="sm" variant={(props.note.isPinned?"success-":"primary-")+props.currentTheme} onClick={e=>props.onPin(e, props.note)}>
               {props.note.isPinned ? "Unpin" : "Pin"}
             </Button>

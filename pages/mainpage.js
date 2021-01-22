@@ -55,6 +55,9 @@ class MainController extends React.Component{
     this.handleDragEnd=this.handleDragEnd.bind(this);
     this.analyzeNote=this.analyzeNote.bind(this);
     this.pushNoteToDB=this.pushNoteToDB.bind(this);
+    this.handleModalRename=this.handleModalRename.bind(this);
+    this.handleModalDelete=this.handleModalDelete.bind(this);
+    this.handleModalRenameAdd=this.handleModalRenameAdd.bind(this);
     this.state= {
       //input fields
       tagInput: "",
@@ -102,8 +105,26 @@ class MainController extends React.Component{
   handleNoteInputChange(event){
     const cNote = this.state.note;
     //FLAG -- should update in pins as well?
-    this.setState({note: Object.assign({}, this.state.note,
-      {content: event.target.value, unsavedChanges: 1})});
+    if(this.state.note.isPinned){
+      const index = this.state.pins.findIndex(el => el._id==this.state.note._id);
+      var newPins = this.state.pins.slice();
+      newPins[index] = Object.assign({},newPins[index],{content: this.state.note.content});
+      this.setState({
+        note: Object.assign({}, this.state.note,
+          {content:
+            event.target.value,
+            unsavedChanges: 1}
+        ),
+        pins: newPins
+      });
+    }
+    this.setState({
+      note: Object.assign({}, this.state.note,
+        {content:
+          event.target.value,
+          unsavedChanges: 1
+        })
+    });
   }
   //change of input in the tag text field
   handleTagInputChange(event){
@@ -130,8 +151,63 @@ class MainController extends React.Component{
   }
   //BUTTON / NOTE ONCLICK HANDLERS ~~~~~~~~~~~~~~~~~~
   //FLAG
-  handleModalRename(old, newT){
-    handleRenameTag(old, newT, this.state.tagsTable, this.state.rootTags.slice());
+  handleModalRename(oldTag, newName){
+    var tagsTable = this.state.tagsTable;
+    var rootTags = this.state.rootTags.slice();
+    var nameToId = this.state.nameToId;
+    handleRenameTag(oldTag._id, newName, tagsTable, rootTags, nameToId);
+    this.setState({tagsTable: tagsTable, rootTags: rootTags, nameToId: nameToId});
+  }
+  handleModalRenameAdd(wTag, newName){
+    var tagsTable = this.state.tagsTable;
+    var rootTags = this.state.rootTags.slice();
+    var nameToId = this.state.nameToId;
+    var wRecs = this.state.note.wRecs.slice();
+    var tags = this.state.note.tags.slice();
+    var pins = this.state.pins.slice();
+    var newTag = {
+      _id: null,
+      name: newName,
+      children: [],
+      parent: null
+    };
+    const ind = wRecs.findIndex(el=>el._id==wTag.name);
+    wRecs[ind] = Object.assign({}, wRecs[ind], {_id:newName});
+    handleInsertNewRootTag(newTag, tagsTable, rootTags, nameToId)
+    .then(newRoots => {
+      tags.push(nameToId[newName]);
+      if(this.state.note.isPinned){
+        const i = pins.findIndex(el=>el._id==this.state.note._id);
+        pins[i] = Object.assign({},pins[i],{wRecs: wRecs, tags: tags});
+      }
+      //FLAG -- need to review how wRecs are stored
+      //const newWRecs = handleWRecDelete(tagID, this.state.wRecs.slice());
+      this.setState({
+        rootTags: newRoots,
+        tagsTable: tagsTable,
+        nameToId: nameToId,
+        pins: pins,
+        note: Object.assign({}, this.state.note, {wRecs: wRecs, tags: tags, unsavedChanges: 1})
+      });
+      return;
+    });
+  }
+  handleModalDelete(oldTag){
+    console.log(oldTag);
+    var newRoots = handleDeleteTag(oldTag._id, this.state.tagsTable,
+      this.state.rootTags.slice(), this.state.nameToId);
+    var res = handleDeleteNoteTagRefs(oldTag._id, this.state.curNotes.slice(), this.state.pins.slice());
+    var newTags = this.state.note.tags.slice();
+    const id = newTags.findIndex(el=>el==oldTag._id);
+    if(id>-1){
+      newTags.splice(id,1);
+    }
+    this.setState({
+      rootTags: newRoots,
+      note: Object.assign({}, this.state.note, {tags: newTags}),
+      curNotes: res.curNotes,
+      pins: res.pins
+    });
   }
   //when an alert is minimized
   handleSetShowAlert(bool, message="None"){
@@ -190,6 +266,11 @@ class MainController extends React.Component{
   }
   //when the save button is clicked
   async handleSaveClick(event){
+    //if first save...
+    if(this.state.note._id==null){
+      this.pushNoteToDB();
+      return;
+    }
     var curNotes = this.state.curNotes.slice();
     var pins = this.state.pins.slice();
     const id = this.state.note._id;
@@ -231,7 +312,7 @@ class MainController extends React.Component{
   }
   //when the new note button is clicked
   handleNewNoteClick(event){
-    handleResetMatches(this.state.tagsTable, this.state.nameToId, this.state.note.tags, this.state.wRecs);
+    handleResetMatches(this.state.tagsTable, this.state.nameToId, this.state.note.tags, this.state.note.wRecs);
     var newNote = {
       _id: null,
       content: "Type here!",
@@ -239,32 +320,56 @@ class MainController extends React.Component{
       wRecs: [],
       unsavedChanges: 0
     };
-    this.setState({note: newNote});
+    var pins = this.state.pins.slice();
+    var curNotes = this.state.curNotes.slice();
+    if(this.state.note._id!=null){
+      if(this.state.note.isPinned){
+        const pInd = pins.findIndex(el =>el._id==this.state.note._id);
+        pins[pInd] = Object.assign({}, pins[pInd], {isActive:0});
+      }
+      else{
+        const qInd = curNotes.findIndex(el =>el._id==this.state.note._id);
+        curNotes[qInd] = Object.assign({}, curNotes[qInd], {isActive:0});
+      }
+    }
+    this.setState({note: newNote, pins: pins, curNotes:curNotes});
   }
   //when the publish botton is clicked (analyzes and pushes a note to DB)
   async handlePublishClick(event){
-    this.analyzeNote();
+    if(this.state.note._id==null){
+      this.analyzeNote()
+      .then((tags => this.pushNoteToDB(tags)));
+    }
+    else{
+      this.analyzeNote().then(wRecs => {
+        var pins = this.state.pins.slice();
+        const ind = pins.findIndex(el => el._id==this.state.note._id);
+        var newNote = Object.assign({},this.state.note,{wRecs: wRecs, unsavedChanges:1});
+        if(ind>-1){
+          pins[ind] = newNote;
+        }
+        this.setState({
+          note: newNote,
+          pins: pins
+        });
+      })
+    }
   }
   //helper functions for handlePublishClick
   //pushes note content to watson, requests wRecs
   async analyzeNote(){
-    handleAnalyzeNote(this.state.note.content)
+    return handleAnalyzeNote(this.state.note.content)
     .then(response => response.json())
     .then(jso => jso.result)
     .then(result => {
       var entities = result.entities;
       var concepts = result.concepts;
       var keywords = result.keywords;
-      const wRecs = parseWatsonRecs(concepts, entities, keywords);
-      this.setState({
-        wRecs: wRecs
-      });
-      return(wRecs);
-    })
-    .then(tags => this.pushNoteToDB(tags));
+      return parseWatsonRecs(concepts, entities, keywords);
+    });
   }
   //pushes note and new wRecs to mongodb
-  async pushNoteToDB(tags){
+  async pushNoteToDB(tags = []){
     let wRecs = await tags;
     var newNote = Object.assign({}, this.state.note,
       {wRecs: wRecs, unsavedChanges:0});
@@ -350,7 +455,8 @@ class MainController extends React.Component{
     });
   }
   //when a watson tag button is clicked in tag-panel
-  async handleWTagClick(event, name){
+  async handleWTagClick(event, tag){
+    var name = tag.name;
     var newT = {
       _id: null,
       name: name,
@@ -387,7 +493,7 @@ class MainController extends React.Component{
         //const wRes = handleWRecDelete(id, this.state.wRecs.slice());
         this.setState({
           note: Object.assign({}, this.state.note, {tags:curNoteT, unsavedChanges: 1}),
-          rootTags: curRoots,
+          rootTags: newRoots,
           nameToId: nameToId,
           tagsTable: tagsTable
         });
@@ -436,10 +542,13 @@ class MainController extends React.Component{
           .then(res => {
             var newRoots = res.roots;
             var id = res.tagId;
-            noteTags.push(id);
+            var flag = (noteTags.findIndex(el => el == id)==-1);
+            if(flag){
+              noteTags.push(id);
+            }
             this.setState({
               tagInput: "",
-              note: Object.assign({}, this.state.note, {tags: noteTags, unsavedChanges: 1}),
+              note: Object.assign({}, this.state.note, {tags: noteTags, unsavedChanges: (flag?1:this.state.note.unsavedChanges)}),
               tagsTable: tagsTable,
               nameToId: nameToId,
               rootTags: newRoots
@@ -449,8 +558,14 @@ class MainController extends React.Component{
         }
     }
     else{
-      noteTags.push(nameToId[key]);
-      this.setState({note: Object.assign({}, this.state.note, {tags: noteTags, unsavedChanges: 1})});
+      if(noteTags.findIndex(el => el == nameToId[key])==-1){
+        noteTags.push(nameToId[key]);
+        this.setState({tagInput: "",note: Object.assign({}, this.state.note, {tags: noteTags, unsavedChanges: 1})});
+      }
+      else{
+        this.setState({tagInput: ""});
+      }
+      return;
     }
   }
   async helperInsertPath(path, rootTags, prev){
@@ -558,7 +673,7 @@ class MainController extends React.Component{
       }
       //if the tag has children, add those to a search query
       else if(tagsTable[nameToId[key]].children.length>0){
-        const res = handleSearchRecurseChildren(key, tagsTable, nameToId);
+        const res = handleSearchRecurseChildren(nameToId[key], tagsTable);
         //FLAG -- update the api logic to ensure searching by ID is functional
         promise = handleGetNotesFromTags([res]);
         newExt = key+"/...";
@@ -596,7 +711,7 @@ class MainController extends React.Component{
           if(typeof key !== 'undefined'){
             //if has children....
             if(tagsTable[nameToId[key]].children.length>0){
-              const res = handleSearchRecurseChildren(key, tagsTable, nameToId);
+              const res = handleSearchRecurseChildren(nameToId[key], tagsTable);
               newTags[n] = newTags[n].concat(res);
               newExt = newExt+key+"/...";
             }
@@ -713,7 +828,8 @@ class MainController extends React.Component{
       }
     }
     else{
-      if(!result.destination || result.destination.index==result.source.index){
+      console.log(result);
+      if(!result.destination){
         return;
       }
       //add tag as Root tag if attempting to drop anywhere
@@ -742,6 +858,9 @@ class MainController extends React.Component{
           });
         }
         else{
+          if(result.destination.index==result.source.index){
+            return;
+          }
           var tagsTable = this.state.tagsTable;
           var rootTags = this.state.rootTags.slice();
           var nameToId = this.state.nameToId;
@@ -818,6 +937,9 @@ class MainController extends React.Component{
                   noteTags = {this.state.note.tags}
                   onExClick = {this.handleETagClick}
                   onCollapseClick={this.handleCollapseClick}
+                  onModalRename={this.handleModalRename}
+                  onModalRenameAdd={this.handleModalRenameAdd}
+                  onModalDelete={this.handleModalDelete}
                   onWsClick = {this.handleWTagClick}
                   wRecs = {this.state.note.wRecs}
                   currentTheme = {this.state.currentTheme}
@@ -846,6 +968,15 @@ function SplitPane(props) {
   );
 }
 //ADDITIONAL HANDLER FUNCTIONS~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+function handleValidateNoteTags(tags, tagsTable){
+  var newTags = [];
+  for(var tag of tags){
+    if(typeof tagsTable[tag] !== 'undefined'){
+      newTags.push(tag);
+    }
+  }
+  return newTags;
+}
 //handles api interface for moving draggedTag to be targetTag's child--returns updated roots
 function handleMoveTag(draggedTagID, targetTagID, tagsTable, rootTags){
   //two steps to 'delete':
@@ -863,6 +994,7 @@ function handleMoveTag(draggedTagID, targetTagID, tagsTable, rootTags){
 //or children fields of other tags, updates their DB entries, but not the entry of draggedTag
 function handleRemoveTagRefs(draggedTagID, tagsTable, rootTags, fromDelete=0){
   const draggedTag = tagsTable[draggedTagID];
+  console.log("dTag: ",draggedTag);
   //for every child, updating parent to be the draggedTag's parent
   //if not collapsed, that is (or if fromDelete)
   var newChildren = [];
@@ -931,6 +1063,7 @@ async function handleInsertNewSubTag(newTag, targetTagID, tagsTable, rootTags, n
 //assuming newTag is not to be a rootTag
 function insertNewSubTag(newTag, targetTagID, tagsTable, nameToId){
   tagsTable[newTag._id] = newTag;
+  tagsTable.size = tagsTable.size+1;
   nameToId[newTag.name] = newTag._id;
   const targetTag = tagsTable[targetTagID];
   var children = targetTag.children.slice();
@@ -945,6 +1078,7 @@ async function handleInsertNewRootTag(newTag, tagsTable, rootTags, nameToId){
   .then(_id => {
     newTag._id = _id;
     tagsTable[_id] = newTag;
+    tagsTable.size = tagsTable.size+1;
     nameToId[newTag.name] = _id;
     rootTags.push(_id);
     handleRefreshIndices(tagsTable, rootTags);
@@ -967,26 +1101,32 @@ function handleRenameTag(oldId, newName, tagsTable, rootTags, nameToId){
 function handleDeleteTag(tagId, tagsTable, rootTags, nameToId){
   handleDeleteTagReq(tagId);
   rootTags = handleRemoveTagRefs(tagId, tagsTable, rootTags.slice(), 1);
-  delete tagsTable.tagId;
   delete nameToId[tagsTable[tagId].name];
+  delete tagsTable[tagId];
+  tagsTable.size=tagsTable.size-1;
   handleRefreshIndices(tagsTable, rootTags);
   return rootTags;
 }
-//ensures all note tags actually EXIST,
-//removes them if they do not, returning updated tags
-function handleCheckNoteTags(tags, tagsTable){
-  var newTags = tags.slice();
-  var changes = -1;
-  for(var n=tags.length-1; n>=0; n--){
-    if(typeof tagsTable[tags[n]] === 'undefined'){
-      newTags.splice(n, 1);
-      changes = 1;
+function handleDeleteNoteTagRefs(tagId, curNotes, pins){
+  handleDeleteNoteTagReq(tagId);
+  for(var n=0; n<curNotes.length; n++){
+    const id = curNotes[n].tags.findIndex(el => el == tagId);
+    if(id > -1){
+      var newTags = curNotes[n].tags.slice();
+      newTags.splice(id,1);
+      curNotes[n] = Object.assign({}, curNotes[n], {tags: newTags});
     }
   }
-  if(!changes){
-    return changes;
+  for(var m=0; m<pins.length; m++){
+    const pid = pins[m].tags.findIndex(el => el == tagId);
+    if(pid > -1){
+      var newTags = pins[m].tags.slice();
+      newTags.splice(pid,1);
+      pins[m] = Object.assign({}, pins[m], {tags: newTags});
+    }
   }
-  return newTags;
+  return({curNotes: curNotes, pins: pins});
+
 }
 //refreshes the indices in tagsTable based on the roots array
 function handleRefreshIndices(tagsTable, roots){
@@ -1028,6 +1168,7 @@ function parseWatsonRecs(con, ent, kyw){
   for(var c=0; c<con.length; c++){
     const ind = results.findIndex(val => val._id.toLowerCase() == con[c].text.toLowerCase());
     if(ind < 0){
+      //FLAG -- add an "isignored" attribute?
       const newT = {
         _id: con[c].text,
         relevance: con[c].relevance,
@@ -1116,11 +1257,11 @@ function handleCheckAgainstQuery(tags, curQuery){
   }
 }
 //adds the key and all children/descendents to an 'or' search array
-function handleSearchRecurseChildren(key, tagsTable, nameToId){
-  var res = [nameToId[key]];
-  const children = tagsTable[nameToId[key]].children.slice();
+function handleSearchRecurseChildren(id, tagsTable){
+  var res = [id];
+  const children = tagsTable[id].children.slice();
   for(var n=0; n<children.length; n++){
-    res = res.concat(handleSearchRecurseChildren(children[n], tagsTable, nameToId));
+    res = res.concat(handleSearchRecurseChildren(children[n], tagsTable));
   }
   return res;
 }
@@ -1226,6 +1367,15 @@ async function handleUpdateTagReq(newTag){
 //helper function for deleting tag from DB
 async function handleDeleteTagReq(tagId){
   return fetch('http://localhost:3000/api/mongo-deletetag', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({_id: tagId})
+  });
+}
+async function handleDeleteNoteTagReq(tagId){
+  return fetch('http://localhost:3000/api/mongo-deletenotetags', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'

@@ -4,14 +4,6 @@ export default async (req, res) => {
   const { db } = await connectToDatabase();
   const tagsDB = db.collection("notes");
   const tags = req.body.tags;
-  var objs = [];
-  var ObjectId = require('mongodb').ObjectId;
-  for(var n=0; n<tags.length; n++){
-    objs[n]=[];
-    for(var m=0; m<tags.length; m++){
-      objs[n].push(new ObjectId(tags[n][m]));
-    }
-  }
   //tags is a 2d array:
   // tags[0]: {tag1, tag2, ... , tagn}
   //the find returns all notes that match 1 tag from every tags[i] array
@@ -21,7 +13,7 @@ export default async (req, res) => {
   if(tags.length==1){
     query = {
       tags: {
-        $in: objs[0]
+        $in: tags[0]
       }
     };
   }
@@ -30,7 +22,7 @@ export default async (req, res) => {
     for(var n=0; n<tags.length; n++){
       and.push({
         tags: {
-          $in: objs[n]
+          $in: tags[n]
         }
       });
     }
