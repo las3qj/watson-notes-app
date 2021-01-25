@@ -6,6 +6,7 @@ import TagPanel from '../components/tag-panel.js';
 import NoteSelect from '../components/note-select.js';
 import Container from 'react-bootstrap/Container';
 import {Value} from 'slate';
+import {serialize} from '../components/slate-note-editor.js';
 import { caseInsensitiveSearch, specialCharacterParse, searchParse } from '../util/string-parsing.js';
 
 async function getInitialUserData() {
@@ -377,7 +378,7 @@ class MainController extends React.Component{
   //helper functions for handlePublishClick
   //pushes note content to watson, requests wRecs
   async analyzeNote(){
-    return handleAnalyzeNote(this.state.note.content)
+    return handleAnalyzeNote(serialize(this.state.note.content))
     .then(response => response.json())
     .then(jso => jso.result)
     .then(result => {
