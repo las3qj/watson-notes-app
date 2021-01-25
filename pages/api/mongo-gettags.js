@@ -3,6 +3,7 @@ import Cors from 'cors';
 
 // Initializing the cors middleware
 const cors = Cors({
+  origin: true,
   methods: ['GET', 'HEAD', 'POST'],
 })
 // Helper method to wait for a middleware to execute before continuing
@@ -21,7 +22,7 @@ function runMiddleware(req, res, fn) {
 
 export default async (req, res) => {
   await runMiddleware(req, res, cors);
-  
+
   const { db } = await connectToDatabase();
   const tagsDB = db.collection("tags");
   const query = {};
