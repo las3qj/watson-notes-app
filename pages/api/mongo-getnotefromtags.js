@@ -1,7 +1,7 @@
-import { connectToDatabase } from "../../util/mongodb";
+import { connect } from "../../util/database";
 
 export default async (req, res) => {
-  const { db } = await connectToDatabase();
+  const { db } = await connect();
   const tagsDB = db.collection("notes");
   const tags = req.body.tags;
   //tags is a 2d array:

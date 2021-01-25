@@ -1,4 +1,4 @@
-import { connectToDatabase } from "../../util/mongodb";
+import { connect } from "../../util/database";
 import Cors from 'cors';
 
 // Initializing the cors middleware
@@ -23,7 +23,7 @@ function runMiddleware(req, res, fn) {
 export default async (req, res) => {
   await runMiddleware(req, res, cors);
 
-  const { db } = await connectToDatabase();
+  const { db } = await connect();
   const tagsDB = db.collection("tags");
   const query = {};
   const sBy = req.body;

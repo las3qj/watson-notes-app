@@ -1,7 +1,7 @@
-import { connectToDatabase } from "../../util/mongodb";
+import { connect } from "../../util/database";
 
 export default async (req, res) => {
-  const { db } = await connectToDatabase();
+  const { db } = await connect();
   const tagsDB = db.collection("tags");
   const _id = req.body._id;
   const children = req.body.children;
@@ -20,7 +20,7 @@ export default async (req, res) => {
     root: root,
     indices: indices
   };
-  
+
   const query = {
     _id: root
   };

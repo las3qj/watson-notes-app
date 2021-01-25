@@ -1,4 +1,4 @@
-import { connectToDatabase } from "../../util/mongodb";
+import { connect } from "../../util/database";
 import Cors from 'cors'
 
 // Initializing the cors middleware
@@ -22,19 +22,24 @@ function runMiddleware(req, res, fn) {
 }
 
 export default async (req, res) => {
-  await runMiddleware(req, res, cors);
+  try {
+    await runMiddleware(req, res, cors);
 
-  const { db } = await connectToDatabase();
-  const tagsDB = db.collection("notes");
-  const sBy = req.body;
-  const sortBy = sBy? sBy : "_id";
-  const query = {};
-  const options = {
-    sort: { [sortBy]: 1 }
-  };
+    const { db } = await connect();
+    const tagsDB = db.collection("notes");
+    const sBy = req.body;
+    const sortBy = sBy? sBy : "_id";
+    const query = {};
+    const options = {
+      sort: { [sortBy]: 1 }
+    };
 
-  const cursor = await tagsDB.find(query, options);
-  const arr = await cursor.toArray();
-  res.statusCode = 200;
-  res.end(JSON.stringify(await arr));
+    const cursor = await tagsDB.find(query, options);
+    const arr = await cursor.toArray();
+    res.statusCode = 200;
+    res.end(JSON.stringify(await arr));
+  } catch(e) {
+    res.status(500);
+    console.log("error, unable to get notes");
+  }
 };
