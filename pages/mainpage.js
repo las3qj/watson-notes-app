@@ -37,6 +37,23 @@ async function getInitialUserData() {
   );
 }
 
+async function testInitialReqs() {
+  //getting all tags
+  var curTags = handleGetAllTags()
+  .then(tags => {     //simultaneously populate tagsTable and roots array
+    console.log("tags: ",tags);
+  });
+  .catch(()=>console.log("error with tags"));
+
+  var curNotes = handleGetAllNotes()
+  .then(notes => console.log("notes: ",notes));
+  .catch(()=>console.log("error with notes"));
+  //return as props for constructor
+  return (
+    {tags: await curTags, notes: await curNotes}
+  );
+}
+
 class MainController extends React.Component{
   constructor(props){
     super(props);
@@ -99,6 +116,10 @@ class MainController extends React.Component{
   }
 
   componentDidMount(){
+    testInitialReqs();
+  }
+
+  dummyMethod(){
     getInitialUserData()
     .then(res => {
       this.setState({
@@ -1352,7 +1373,7 @@ function handleSearchRecurseChildren(id, tagsTable){
 //returns a promise--whose value is the user's entire tag DB
 async function handleGetAllTags(sortType) {
   return fetch('/api/mongo-gettags', {
-    method: 'POST',
+    method: 'GET',
     headers: {
       'Content-Type': 'application/json'
     },
