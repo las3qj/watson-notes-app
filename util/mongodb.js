@@ -1,8 +1,7 @@
 import { MongoClient } from 'mongodb'
 
 const { MONGODB_URI, MONGODB_DB } = process.env
-//pw: OqUvT42YzJMVyjB6
-//mongodb+srv://primary-user:OqUvT42YzJMVyjB6@watson-noteapp-cluster.v1a4g.mongodb.net/WatsonNotesApp?retryWrites=true&w=majority
+
 if (!MONGODB_URI) {
   throw new Error(
     'Please define the MONGODB_URI environment variable inside .env.local'
