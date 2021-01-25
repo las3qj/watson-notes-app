@@ -411,6 +411,7 @@ class MainController extends React.Component{
   }
   //when a new note is clicked/selected from note-select
   handleNoteSelectClick(event, note){
+    console.log("beginning");
     if(note.isActive){
       return;
     }
@@ -442,6 +443,7 @@ class MainController extends React.Component{
       curNotes: curNotes,
       pins: pins
     });
+    console.log("ended");
   }
   //when a tag button in the tag bar is clicked
   handleTagBarClick(event, tag){
