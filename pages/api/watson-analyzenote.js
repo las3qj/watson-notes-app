@@ -1,6 +1,28 @@
-//Given a single input text string, requests the top 10 keywords mentioned
+import Cors from 'cors';
 
-export default function(req, res){
+// Initializing the cors middleware
+const cors = Cors({
+  origin: '*',
+  methods: ['GET', 'HEAD', 'POST'],
+})
+
+// Helper method to wait for a middleware to execute before continuing
+// And to throw an error when an error happens in a middleware
+function runMiddleware(req, res, fn) {
+  return new Promise((resolve, reject) => {
+    fn(req, res, (result) => {
+      if (result instanceof Error) {
+        return reject(result)
+      }
+
+      return resolve(result)
+    })
+  })
+}
+
+export default async function(req, res){
+  await runMiddleware(req,res,cors);
+
   const NaturalLanguageUnderstandingV1 = require('ibm-watson/natural-language-understanding/v1');
   const { IamAuthenticator } = require('ibm-watson/auth');
   const input = req.body.input;
@@ -8,7 +30,7 @@ export default function(req, res){
   const nlu = new NaturalLanguageUnderstandingV1({
     version: '2020-08-01',
     authenticator: new IamAuthenticator({
-      apikey: '1Pf8MXp-6k5cN7tvSZ8q-23rlOxgmWyKiBchbM0LM_KM',
+      apikey: process.env.WATSON_APIKEY,
     }),
     serviceUrl: 'https://api.us-south.natural-language-understanding.watson.cloud.ibm.com/instances/c6cc95f9-4bc6-4db6-af50-ae4cf2c7d4a8',
   });
