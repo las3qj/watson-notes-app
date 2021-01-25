@@ -4,6 +4,7 @@ import Badge from 'react-bootstrap/Badge';
 import Button from 'react-bootstrap/Button';
 import Card from 'react-bootstrap/Card';
 import Alert from 'react-bootstrap/Alert';
+import {serialize} from '../components/slate-note-editor.js';
 
 export default function NoteSelect(props){
   return(
@@ -56,7 +57,8 @@ function NoteList(props){
 
 
 function NoteCard(props){
-  var content = props.note.content.slice();
+  var data = props.note.content;
+  var content = serialize(JSON.parse(data));
   if(content.length > 225){
     content = content.substring(0, 222).concat("...");
   }

@@ -5,6 +5,7 @@ import NewNote from '../components/new-note.js';
 import TagPanel from '../components/tag-panel.js';
 import NoteSelect from '../components/note-select.js';
 import Container from 'react-bootstrap/Container';
+import {Value} from 'slate';
 import { caseInsensitiveSearch, specialCharacterParse, searchParse } from '../util/string-parsing.js';
 
 async function getInitialUserData() {
@@ -58,13 +59,22 @@ class MainController extends React.Component{
     this.handleModalRename=this.handleModalRename.bind(this);
     this.handleModalDelete=this.handleModalDelete.bind(this);
     this.handleModalRenameAdd=this.handleModalRenameAdd.bind(this);
+    this.handleAddInputChange=this.handleAddInputChange.bind(this);
+    this.handleAddKeyPress=this.handleAddKeyPress.bind(this);
+    const initialValue = [
+      {
+        type: 'paragraph',
+        children: [{ text: 'A line of text in a paragraph.' }]
+      }
+    ];
     this.state= {
       //input fields
       tagInput: "",
       searchInput: "/All",
+      initialValue: JSON.stringify(initialValue),
       note: {
         _id: null,
-        content: "This is my note",
+        content: JSON.stringify(initialValue),
         tags: [],
         wRecs: [],
         unsavedChanges: 0
@@ -102,28 +112,34 @@ class MainController extends React.Component{
 
   //INPUT CHANGE HANDLERS ~~~~~~~~~~~~~~~~~~~
   //change of input in the note text field
-  handleNoteInputChange(event){
+  handleNoteInputChange(value){
     const cNote = this.state.note;
     //FLAG -- should update in pins as well?
     if(this.state.note.isPinned){
       const index = this.state.pins.findIndex(el => el._id==this.state.note._id);
       var newPins = this.state.pins.slice();
-      newPins[index] = Object.assign({},newPins[index],{content: this.state.note.content});
+      newPins[index] = Object.assign({},newPins[index],{content: value});
       this.setState({
-        note: Object.assign({}, this.state.note,
-          {content:
-            event.target.value,
-            unsavedChanges: 1}
-        ),
+        note: Object.assign({}, this.state.note, {
+          content: value,
+          unsavedChanges: 1
+        }),
         pins: newPins
       });
+      return;
     }
     this.setState({
-      note: Object.assign({}, this.state.note,
-        {content:
-          event.target.value,
-          unsavedChanges: 1
-        })
+      note: Object.assign({}, this.state.note, {
+        content: value,
+        unsavedChanges: 1
+      })
+    });
+  }
+  //change of input in the add tag text fields
+  handleAddInputChange(event){
+    const newI = event.target.value;
+    this.setState({
+      addInput: newI
     });
   }
   //change of input in the tag text field
@@ -313,9 +329,10 @@ class MainController extends React.Component{
   //when the new note button is clicked
   handleNewNoteClick(event){
     handleResetMatches(this.state.tagsTable, this.state.nameToId, this.state.note.tags, this.state.note.wRecs);
+    console.log(this.state.initialValue);
     var newNote = {
       _id: null,
-      content: "Type here!",
+      content: this.state.initialValue,
       tags: [],
       wRecs: [],
       unsavedChanges: 0
@@ -377,7 +394,7 @@ class MainController extends React.Component{
     handleInsertNote(newNote)
     .then(res => res.json())
     .then(_id => {
-      newNote = Object.assign({}, newNote, {_id: _id});
+      newNote = Object.assign({}, newNote, {_id: _id, isActive: true});
       var cNotes = this.state.curNotes.slice();
       //checks current note against current query
       if(handleCheckAgainstQuery(newNote.tags, this.state.curQuery)){
@@ -568,6 +585,65 @@ class MainController extends React.Component{
       return;
     }
   }
+
+
+  //currently very redundant with above--need to refactor mutual logic into helper call
+  async handleAddKeyPress(event){
+    //escapes this method if the key is not 'Enter'
+    if(event.key !== "Enter"){
+      return;
+    }
+    const input = event.target.value.trim();
+    var tagsTable = this.state.tagsTable;
+    var nameToId = this.state.nameToId;
+    var rootTags = this.state.rootTags.slice();
+    var key = caseInsensitiveSearch(input, nameToId);
+    if(typeof key === 'undefined'){
+        const path = specialCharacterParse(input);
+        //if path is only one string, insert as a root tag and add to note tags
+        if(path.length==1){
+          var newTag = {
+            _id: null,
+            name: input,
+            children: [],
+            parent: null
+          };
+          return handleInsertNewRootTag(newTag, tagsTable, rootTags, nameToId)
+          .then(newRoots => {
+            this.setState({
+              addInput: "",
+              tagsTable: tagsTable,
+              nameToId: nameToId,
+              rootTags: newRoots
+            });
+            return;
+          });
+        }
+        else{
+          return this.helperInsertPath(path, rootTags, null)
+          .then(res => {
+            var newRoots = res.roots;
+            this.setState({
+              addInput: "",
+              tagsTable: tagsTable,
+              nameToId: nameToId,
+              rootTags: newRoots
+            });
+            return;
+          });
+        }
+    }
+    else{
+      if(noteTags.findIndex(el => el == nameToId[key])==-1){
+        this.setState({addInput: ""});
+      }
+      else{
+        this.setState({addInput: ""});
+      }
+      return;
+    }
+  }
+
   async helperInsertPath(path, rootTags, prev){
     var tagsTable = this.state.tagsTable;
     var nameToId = this.state.nameToId;
@@ -936,6 +1012,9 @@ class MainController extends React.Component{
                   rootTags = {this.state.rootTags}
                   noteTags = {this.state.note.tags}
                   onExClick = {this.handleETagClick}
+                  addInput = {this.state.addInput}
+                  onAddInputChange = {this.handleAddInputChange}
+                  onAddKeyPress = {this.handleAddKeyPress}
                   onCollapseClick={this.handleCollapseClick}
                   onModalRename={this.handleModalRename}
                   onModalRenameAdd={this.handleModalRenameAdd}

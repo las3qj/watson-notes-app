@@ -8,6 +8,8 @@ import Dropdown from 'react-bootstrap/Dropdown';
 import Badge from 'react-bootstrap/Badge';
 import Image from 'react-bootstrap/Image';
 import Modal from 'react-bootstrap/Modal';
+import Icon, {ComplexIcon} from '../components/icon.js';
+import { ICONS } from '../util/icon-constants.js';
 
 //Expected props: rootsTags, tagsTable, noteTags
 export default function TagPanel(props){
@@ -51,6 +53,9 @@ export default function TagPanel(props){
           tagsTable={props.tagsTable}
           nameToId={props.nameToId}
           noteTags={props.noteTags}
+          onAddInputChange={props.onAddInputChange}
+          onAddKeyPress={props.onAddKeyPress}
+          addInput={props.addInput}
           onClick={props.onExClick}
           onDropDownSelect={handleShow}
           onCollapseClick={props.onCollapseClick}
@@ -155,9 +160,11 @@ function parseTags(wRecs, noteTags, tagsTable, nameToId){
 function ExtantTags(props){
   return(
     <div className={styles.extags}>
-      <h4>
-        <Badge variant = "light"> My tags </Badge>
-      </h4>
+      <ExtantTopPanel currentTheme={props.currentTheme}
+        addInput={props.addInput}
+        onAddInputChange={props.onAddInputChange}
+        onAddKeyPress={props.onAddKeyPress}
+      />
       <TagTree
         rootTags={props.rootTags}
         tagsTable={props.tagsTable}
@@ -172,6 +179,24 @@ function ExtantTags(props){
   );
 }
 
+function ExtantTopPanel(props){
+  return(
+    <div className={styles.tagtopbar}>
+      <Badge variant="light"> My tags </Badge>
+      <span>
+        <Badge variant={"primary-"+props.currentTheme}>
+          New
+        </Badge>
+        <input
+          type="text"  id="search" className="searchbar" value={props.addInput}
+          onChange={props.onAddInputChange}
+          onKeyPress={props.onAddKeyPress}
+        />
+      </span>
+    </div>
+  );
+}
+
 //props: wRecs, size
 function WatsonTags(props){
   function tagsToButton(dTag, index){
@@ -180,6 +205,9 @@ function WatsonTags(props){
       <Draggable key = {""+index} draggableId={"wS"+dTag._id} index={index}>
         {(provided) => (
           <li ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps}>
+            <span className="icon">
+              <Icon icon={ICONS.BULLET} size="12" active={1}/>
+            </span>
             <TagSplitButton
               variant= {dTag.eTagMatch ? "info" : "primary"}
               onClick={props.onClick}
@@ -199,7 +227,7 @@ function WatsonTags(props){
       <Badge variant = "light"> Suggested tags </Badge>
       <Droppable droppableId="wstags" isDropDisabled={true}>
         {(provided) => (
-          <ul {...provided.droppableProps} ref={provided.innerRef}>
+          <ul className="wslist" {...provided.droppableProps} ref={provided.innerRef}>
             {props.wRecs.map((el, index) => tagsToButton(el, (props.size + index)))}
           </ul>
         )}
@@ -267,7 +295,8 @@ function TagTree(props){
           onClick={props.onClick}
           onDropDownSelect={props.onDropDownSelect}
           onCollapseClick={props.onCollapseClick}
-          icon={myTag.children.length ? (data.isCollapsed ? <Image src="/arrow-right.png" rounded/> : <Image src="/arrow-down.png" rounded/>) : "•"}
+          iconType={myTag.children.length ? (data.isCollapsed ? "collapsed" : "collapse") : "bullet"}
+
         />
         <ul className="treelist">
           {myResults}
@@ -283,7 +312,12 @@ function TagTreeNode(props){
     <Draggable key = {""+props.tag.index} draggableId={props.tag._id} index={props.tag.index}>
       {(provided) => (
         <li className="customicon" ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps}>
-          <span className="icon" onClick={(e) => props.onCollapseClick(e, props.tag._id)}> {props.icon} </span>
+          <span className="icon" onClick={(e) => props.onCollapseClick(e, props.tag._id)}>
+          {props.iconType == "collapsed" ? <ComplexIcon outter={ICONS.COLLAPSEDOUTTER} inner={ICONS.COLLAPSEDINNER} size="16" />
+            : props.iconType == "collapse" ? <ComplexIcon outter={ICONS.COLLAPSEOUTTER} inner={ICONS.COLLAPSEINNER} size="16" />
+            : <Icon icon={ICONS.BULLET} size="8" active={1}/>
+            }
+          </span>
           <TagSplitButton
             badge = {props.badge} onClick={props.onClick} dropDownItems={dropDownItems}
             tag={props.tag} variant={props.variant} currentTheme={props.currentTheme}
