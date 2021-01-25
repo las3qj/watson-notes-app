@@ -37,23 +37,6 @@ async function getInitialUserData() {
   );
 }
 
-async function testInitialReqs() {
-  //getting all tags
-  var curTags = handleGetAllTags()
-  .then(tags => {     //simultaneously populate tagsTable and roots array
-    console.log("tags: ",tags);
-  })
-  .catch(()=>console.log("error with tags"));
-
-  var curNotes = handleGetAllNotes()
-  .then(notes => console.log("notes: ",notes))
-  .catch(()=>console.log("error with notes"));
-  //return as props for constructor
-  return (
-    {tags: await curTags, notes: await curNotes}
-  );
-}
-
 class MainController extends React.Component{
   constructor(props){
     super(props);
@@ -1378,7 +1361,7 @@ async function handleGetAllTags(sortType) {
 }
 async function handleGetAllNotes(sortType) {
   return fetch('/api/mongo-getallnotes', {
-    method: 'POST',
+    method: 'GET',
     headers: {
       'Content-Type': 'application/json'
     }
@@ -1386,7 +1369,7 @@ async function handleGetAllNotes(sortType) {
 }
 async function handleGetNoteFromTag(tag){
   return fetch('http://localhost:3000/api/mongo-getnotefromtag', {
-    method: 'POST',
+    method: 'GET',
     headers: {
       'Content-Type': 'application/json'
     },
@@ -1395,7 +1378,7 @@ async function handleGetNoteFromTag(tag){
 }
 async function handleGetNotesFromTags(tags){
   return fetch('http://localhost:3000/api/mongo-getnotefromtags', {
-    method: 'POST',
+    method: 'GET',
     headers: {
       'Content-Type': 'application/json'
     },
@@ -1465,7 +1448,7 @@ async function handleUpdateTagReq(newTag){
 //helper function for deleting tag from DB
 async function handleDeleteTagReq(tagId){
   return fetch('http://localhost:3000/api/mongo-deletetag', {
-    method: 'POST',
+    method: 'DELETE',
     headers: {
       'Content-Type': 'application/json'
     },
@@ -1474,7 +1457,7 @@ async function handleDeleteTagReq(tagId){
 }
 async function handleDeleteNoteTagReq(tagId){
   return fetch('http://localhost:3000/api/mongo-deletenotetags', {
-    method: 'POST',
+    method: 'DELETE',
     headers: {
       'Content-Type': 'application/json'
     },
