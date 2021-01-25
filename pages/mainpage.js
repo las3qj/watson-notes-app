@@ -116,10 +116,6 @@ class MainController extends React.Component{
   }
 
   componentDidMount(){
-    testInitialReqs();
-  }
-
-  dummyMethod(){
     getInitialUserData()
     .then(res => {
       this.setState({
