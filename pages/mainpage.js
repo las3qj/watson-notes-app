@@ -27,8 +27,10 @@ async function getInitialUserData() {
     handleRefreshIndices(tagsTable, roots);
     return({tT: tagsTable, nTI: nameToId, r: roots});
   });
+  .catch(()=>console.log("error with tags"));
 
-  var curNotes = handleGetAllNotes().then(jso => jso.json());
+  var curNotes = handleGetAllNotes().then(jso => jso.json())
+  .catch(()=>console.log("error with notes"));
   //return as props for constructor
   return (
     {tags: await curTags, notes: await curNotes}
