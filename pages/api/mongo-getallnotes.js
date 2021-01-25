@@ -3,7 +3,7 @@ import Cors from 'cors'
 
 // Initializing the cors middleware
 const cors = Cors({
-  origin: true,
+  origin: 'https://watson-notes-app.vercel.app/mainpage',
   methods: ['GET', 'HEAD', 'POST'],
 })
 
