@@ -1368,7 +1368,7 @@ async function handleGetAllNotes(sortType) {
   });
 }
 async function handleGetNoteFromTag(tag){
-  return fetch('http://localhost:3000/api/mongo-getnotefromtag', {
+  return fetch('/api/mongo-getnotefromtag', {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json'
@@ -1377,7 +1377,7 @@ async function handleGetNoteFromTag(tag){
   });
 }
 async function handleGetNotesFromTags(tags){
-  return fetch('http://localhost:3000/api/mongo-getnotefromtags', {
+  return fetch('/api/mongo-getnotefromtags', {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json'
@@ -1386,7 +1386,7 @@ async function handleGetNotesFromTags(tags){
   });
 }
 async function handleUpdateNote(noteData) {
-  return fetch('http://localhost:3000/api/mongo-updatenote', {
+  return fetch('/api/mongo-updatenote', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'
@@ -1395,7 +1395,7 @@ async function handleUpdateNote(noteData) {
   });
 }
 async function handleAnalyzeNote(content) {
-  return fetch('http://localhost:3000/api/watson-analyzenote', {
+  return fetch('/api/watson-analyzenote', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'
@@ -1406,7 +1406,7 @@ async function handleAnalyzeNote(content) {
   });
 }
 async function handleInsertNote(newNote){
-  return fetch('http://localhost:3000/api/mongo-insertnote', {
+  return fetch('/api/mongo-insertnote', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'
@@ -1416,7 +1416,7 @@ async function handleInsertNote(newNote){
 }
 //simply handles the api req for inserting a tags
 async function handleInsertTagReq(newTag){
-  return fetch('http://localhost:3000/api/mongo-inserttag', {
+  return fetch('/api/mongo-inserttag', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'
@@ -1427,7 +1427,7 @@ async function handleInsertTagReq(newTag){
 //updates db tags with parent=prevP to new parent
 async function handleUpdateParentsReq(prevP, newP){
   //update the parent field for all those children in the DB
-  return fetch('http://localhost:3000/api/mongo-updateparents', {
+  return fetch('/api/mongo-updateparents', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'
@@ -1437,7 +1437,7 @@ async function handleUpdateParentsReq(prevP, newP){
 }
 //updates db tag with new fields
 async function handleUpdateTagReq(newTag){
-  return fetch('http://localhost:3000/api/mongo-updatetag', {
+  return fetch('/api/mongo-updatetag', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'
@@ -1447,7 +1447,7 @@ async function handleUpdateTagReq(newTag){
 }
 //helper function for deleting tag from DB
 async function handleDeleteTagReq(tagId){
-  return fetch('http://localhost:3000/api/mongo-deletetag', {
+  return fetch('/api/mongo-deletetag', {
     method: 'DELETE',
     headers: {
       'Content-Type': 'application/json'
@@ -1456,7 +1456,7 @@ async function handleDeleteTagReq(tagId){
   });
 }
 async function handleDeleteNoteTagReq(tagId){
-  return fetch('http://localhost:3000/api/mongo-deletenotetags', {
+  return fetch('/api/mongo-deletenotetags', {
     method: 'DELETE',
     headers: {
       'Content-Type': 'application/json'
