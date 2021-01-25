@@ -1349,7 +1349,7 @@ function handleSearchRecurseChildren(id, tagsTable){
 //sortType -- optional sort mode (defaults to sorting by name)
 //returns a promise--whose value is the user's entire tag DB
 async function handleGetAllTags(sortType) {
-  return fetch('http://localhost:3000/api/mongo-gettags', {
+  return fetch('/api/mongo-gettags', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'
@@ -1358,7 +1358,7 @@ async function handleGetAllTags(sortType) {
   });
 }
 async function handleGetAllNotes(sortType) {
-  return fetch('http://localhost:3000/api/mongo-getallnotes', {
+  return fetch('/api/mongo-getallnotes', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'
