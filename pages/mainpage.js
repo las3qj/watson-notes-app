@@ -42,11 +42,11 @@ async function testInitialReqs() {
   var curTags = handleGetAllTags()
   .then(tags => {     //simultaneously populate tagsTable and roots array
     console.log("tags: ",tags);
-  });
+  })
   .catch(()=>console.log("error with tags"));
 
   var curNotes = handleGetAllNotes()
-  .then(notes => console.log("notes: ",notes));
+  .then(notes => console.log("notes: ",notes))
   .catch(()=>console.log("error with notes"));
   //return as props for constructor
   return (
