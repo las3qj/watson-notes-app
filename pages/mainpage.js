@@ -378,7 +378,7 @@ class MainController extends React.Component{
   //helper functions for handlePublishClick
   //pushes note content to watson, requests wRecs
   async analyzeNote(){
-    return handleAnalyzeNote(serialize(this.state.note.content))
+    return handleAnalyzeNote(serialize(JSON.parse(this.state.note.content)))
     .then(response => response.json())
     .then(jso => jso.result)
     .then(result => {
