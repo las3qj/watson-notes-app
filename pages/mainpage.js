@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import React from 'react';
-import styles from '../styles/CreateNewPage.module.css';
+import styles from '../styles/component-styles.module.css';
 import NewNote from '../components/new-note.js';
 import TagPanel from '../components/tag-panel.js';
 import NoteSelect from '../components/note-select.js';
@@ -61,6 +61,7 @@ class MainController extends React.Component{
     this.pushNoteToDB=this.pushNoteToDB.bind(this);
     this.handleModalRename=this.handleModalRename.bind(this);
     this.handleModalDelete=this.handleModalDelete.bind(this);
+    this.handleModalWDelete=this.handleModalWDelete.bind(this);
     this.handleModalRenameAdd=this.handleModalRenameAdd.bind(this);
     this.handleAddInputChange=this.handleAddInputChange.bind(this);
     this.handleAddKeyPress=this.handleAddKeyPress.bind(this);
@@ -227,6 +228,13 @@ class MainController extends React.Component{
       curNotes: res.curNotes,
       pins: res.pins
     });
+  }
+  handleModalWDelete(oldWRec){
+    console.log(oldWRec);
+    var newWRecs = this.state.note.wRecs.slice();
+    const ind = newWRecs.findIndex(el => el._id == oldWRec.name);
+    newWRecs.splice(ind, 1);
+    this.setState({note: Object.assign({}, this.state.note, {wRecs: newWRecs, unsavedChanges:1})});
   }
   //when an alert is minimized
   handleSetShowAlert(bool, message="None"){
@@ -964,7 +972,7 @@ class MainController extends React.Component{
   //RENDER METHOD ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   render(){
     return (
-      <div className={"layout"}>
+      <div className="layout">
         <SplitPane
           className = {styles.splitpane}
           styleleft = {styles.splitpaneleft1}
@@ -1024,6 +1032,7 @@ class MainController extends React.Component{
                   onModalRename={this.handleModalRename}
                   onModalRenameAdd={this.handleModalRenameAdd}
                   onModalDelete={this.handleModalDelete}
+                  onModalWDelete={this.handleModalWDelete}
                   onWsClick = {this.handleWTagClick}
                   wRecs = {this.state.note.wRecs}
                   currentTheme = {this.state.currentTheme}

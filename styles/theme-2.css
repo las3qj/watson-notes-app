@@ -92,15 +92,15 @@
 
 .btn-info-2:hover {
   color: #fff !important;
-  background-color: #356e41 !important;
-  border-color: #356e41 !important;
+  background-color: #32693e !important;
+  border-color: #32693e !important;
 }
 
 .btn-info-2:focus, .btn-info-2.focus {
   color: #fff !important;
-  background-color: #2f703c !important;
-  border-color: #256332 !important;
-  box-shadow: 0 0 0 0.2rem rgba(106, 132, 144, 0.5) !important;
+  background-color: #4d995d !important;
+  border-color: #4d995d !important;
+  box-shadow: 0 0 0 0.2rem rgba(129, 175, 139, 0.5) !important;
 }
 
 .btn-info-2.disabled, .btn-info-2:disabled {

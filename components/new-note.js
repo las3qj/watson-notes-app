@@ -1,6 +1,6 @@
 import React from 'react';
 import {useRef, useState, useEffect} from 'react';
-import styles from '../styles/CreateNewPage.module.css';
+import styles from '../styles/component-styles.module.css';
 import {TagButton} from '../components/tag-panel.js';
 import Badge from 'react-bootstrap/Badge';
 import Button from 'react-bootstrap/Button';
@@ -53,7 +53,7 @@ function TopBar(props){
   return(
     <div className={styles.topbar}>
       <Badge variant="light"> Add tags </Badge>
-      <input type="text" onChange={props.onTagInputChange} onKeyPress={props.onKeyPress} id="tags" className="searchbar" value={props.tagInput}/>
+      <input type="text" onChange={props.onTagInputChange} onKeyPress={props.onKeyPress} id="tags" className={styles.searchbar} value={props.tagInput}/>
       <ScrollBar ids={ids} currentTheme={props.currentTheme} tagsTable={props.tagsTable} onClick={props.onClick}/>
     </div>
   );
@@ -71,30 +71,18 @@ function ScrollBar(props){
     );
   }
   return(
-    <div className="outtertagscrollmenu">
-      <div className="innertagscrollmenu">
+    <div className={styles.outtertagscrollmenu}>
+      <div className={styles.innertagscrollmenu}>
         {props.ids.map(toTagButton)}
       </div>
     </div>
   );
 }
 
-//NoteTextBox, the input text box for the current note
-function NoteTextBox(props){
-  return(
-    <textarea
-      className={styles.noteinput}
-      name="note"
-      value={props.content}
-      onChange={props.onInputChange}
-    />
-  )
-}
-
 //BottomBar, holding the submit and save changes buttons
 function BottomBar(props){
   return(
-    <div className={"buttonbar"}>
+    <div className={styles.buttonbar}>
       <Button variant={"primary-"+props.currentTheme} onClick={props.handleSaveClick} disabled={!props.unsavedChanges}> Save changes </Button>
       <Button variant="secondary" onClick={props.handleNewNoteClick}> New note </Button>
       <Button variant={"primary-"+props.currentTheme} onClick={props.publishOnClick}> Get suggestions </Button>

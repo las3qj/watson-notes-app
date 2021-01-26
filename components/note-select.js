@@ -1,5 +1,5 @@
 import React, {useState} from 'react';
-import styles from '../styles/CreateNewPage.module.css';
+import styles from '../styles/component-styles.module.css';
 import Badge from 'react-bootstrap/Badge';
 import Button from 'react-bootstrap/Button';
 import Card from 'react-bootstrap/Card';
@@ -28,7 +28,7 @@ function TopBar(props){
     <div className={styles.topbar}>
       <Badge variant="light"> Search </Badge>
       <input
-        type="text"  id="search" className="searchbar" value={props.searchInput}
+        type="text"  id="selsearch" className={styles.searchbar} value={props.searchInput}
         onChange={props.onInputChange} onKeyPress={props.onKeyPress}
       />
       <Badge variant={"primary-"+props.currentTheme}>

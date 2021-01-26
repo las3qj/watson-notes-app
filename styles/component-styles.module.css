@@ -1,0 +1,210 @@
+/* To-delete */
+.tagbutton {
+  margin-bottom: 2px;
+  margin-right: 2px;
+}
+/* NewNote component styles */
+.newnote {
+  width: 100%;
+  height: 100%;
+  display:flex;
+  flex-direction: column;
+}
+
+.iconbutton {
+  background-color: transparent !important;
+  border: none;
+}
+
+.noteeditorbar {
+  border-bottom: 1px solid #CCC;
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+
+.noteeditorbar .iconbutton {
+  margin-left: 10px;
+}
+
+.noteeditable {
+  padding: 10px;
+  font-family: Sans-serif;
+  height: 100%;
+  overflow-y: scroll;
+}
+
+.outtertagscrollmenu {
+  width: 100%;
+  margin-left: 15px;
+  margin-right: 15px;
+  overflow-x: auto;
+  white-space: nowrap;
+  display: flex;
+  flex-direction:row;
+}
+
+.innertagscrollmenu {
+  flex-grow: 4;
+  background-color: #f8f7f8;
+}
+
+.innertagscrollmenu .btn {
+  margin-right: 4px;
+}
+
+.buttonbar {
+  width: 100%;
+  height: 10%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border: 1px solid black;
+  padding-left: 5%;
+  padding-right: 5%;
+}
+
+.buttonbar .btn {
+  height: 70%;
+}
+
+/* Outter container component styles */
+
+.splitpane {
+  width: 100%;
+  height: 100%;
+}
+
+.splitpaneright1 {
+  float:right;
+  width: 70%;
+  height: 100%;
+}
+
+.splitpaneright2 {
+  float: right;
+  width: 33%;
+  height: 100%;
+}
+
+.splitpaneleft1 {
+  float: left;
+  width: 30%;
+  height: 100%;
+  border: 1px solid black;
+}
+
+.splitpaneleft2 {
+  float: left;
+  width: 67%;
+  height: 100%;
+  border: 1px solid black;
+}
+
+/* NoteSelect component styles */
+.noteselect {
+  width: 100%;
+  height: 100%;
+}
+
+.topbar {
+  width: 100%;
+  height:10%;
+  display: flex;
+  justify-content: left;
+  border: 1px solid black;
+  align-items: center;
+}
+
+.notelist {
+  width: 100%;
+  height: 90%;
+  display: flex;
+  flex-direction: column;
+  overflow-y: scroll;
+}
+
+.notecard {
+  width: 100%;
+  min-height: 50px;
+  max-height: 150px;
+  border: 1px solid black;
+  background-color: white;
+}
+
+.notetext {
+  width: 98%;
+  margin: 1%;
+  height: 96%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Reusable component styles */
+.searchinput {
+  margin-left: 2px;
+  margin-right: 2px;
+}
+
+.searchbar {
+  font-size: 12px;
+  margin-right: 5px;
+}
+
+/* TagPanel component styles */
+
+.tagpanel {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.tagtopbar {
+  width: 100%;
+  height:10%;
+  display: flex;
+  justify-content:space-between;
+  align-items: center;
+}
+
+.extags {
+  width: 100%;
+  height: 67%;
+  overflow-y: scroll;
+  border: 1px solid black;
+}
+
+.treelist {
+  margin-left: 20px;
+  padding-left: 0px;
+}
+
+.treelist .btn {
+  max-width: 175px;
+}
+
+.extags li::marker {
+  content: "";
+}
+
+.icon {
+  margin-right: 4px;
+}
+
+.wstags {
+  width: 100%;
+  height: 33%;
+  overflow-y: scroll;
+  border: 1px solid black;
+  padding-top: 5px;
+}
+
+.wslist {
+  margin-left: 20px;
+  padding-left: 0px;
+  margin-top: 6px;
+}
+
+.wstags li::marker {
+  content: "";
+}

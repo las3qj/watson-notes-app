@@ -15,7 +15,7 @@ import {
 import { withHistory } from 'slate-history';
 import Icon from '../components/icon.js';
 import { ICONS } from '../util/icon-constants.js';
-import styles from '../styles/CreateNewPage.module.css';
+import styles from '../styles/component-styles.module.css';
 
 const MARKHOTKEYS = {
   'mod+b': 'bold',
@@ -61,7 +61,7 @@ export default function SlateNoteEditor(props){
         props.onInputChange(JSON.stringify(value));
       }}
     >
-      <div className="noteeditorbar">
+      <div className={styles.noteeditorbar}>
         <MarkButton format="bold" icon={ICONS.BOLD} />
         <MarkButton format="italic" icon={ICONS.ITALIC} />
         <MarkButton format="underline" icon={ICONS.UNDERLINE} />
@@ -72,7 +72,7 @@ export default function SlateNoteEditor(props){
       </div>
 
       <Editable
-        className="noteeditable"
+        className={styles.noteeditable}
         renderElement={renderElement}
         renderLeaf={renderLeaf}
         placeholder="Enter some rich text…"
@@ -328,7 +328,7 @@ const withShortcuts = editor => {
 function MarkButton(props){
   const editor = useSlate();
   return (
-    <button className= "iconbutton"
+    <button className= {styles.iconbutton}
       onMouseDown={event => {
         event.preventDefault();
         toggleMark(editor, props.format);
@@ -342,7 +342,7 @@ function MarkButton(props){
 function BlockButton(props){
   const editor = useSlate();
   return (
-    <button className= "iconbutton"
+    <button className= {styles.iconbutton}
       onMouseDown={event => {
         event.preventDefault()
         toggleBlock(editor, props.format)

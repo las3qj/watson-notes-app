@@ -1,5 +1,5 @@
 import React, {useState} from 'react';
-import styles from '../styles/CreateNewPage.module.css';
+import styles from '../styles/component-styles.module.css';
 import { caseInsensitiveSearch } from '../util/string-parsing.js';
 import { DragDropContext, Droppable, Draggable, resetServerContext } from 'react-beautiful-dnd';
 import SplitButton from 'react-bootstrap/SplitButton';
@@ -28,10 +28,19 @@ export default function TagPanel(props){
       setInput(props.tagsTable[tag._id].name);
     }
     else if(item == "Delete"){
-      setShow(2);
-      setHeader("Delete");
-      setTag(props.tagsTable[tag._id]);
-      setInput(props.tagsTable[tag._id].name);
+      const name = props.tagsTable[tag._id];
+      if(name){
+        setShow(2);
+        setHeader("Delete");
+        setTag(props.tagsTable[tag._id]);
+        setInput(props.tagsTable[tag._id].name);
+      }
+      else{
+        setShow(4);
+        setHeader("Delete");
+        setTag(tag);
+        setInput(tag._id);
+      }
     }
     else if(item == "Rename and add"){
       setShow(3);
@@ -45,7 +54,7 @@ export default function TagPanel(props){
     <div className={styles.tagpanel}>
       {(show>-1) ? <TagModal header={header} tag={tag} show={show}
           handleClose={handleClose} currentTheme={props.currentTheme}
-          handleSave={(show==1) ? props.onModalRename : (show==2?props.onModalDelete:props.onModalRenameAdd)}
+          handleSave={(show==1) ? props.onModalRename : (show==2?props.onModalDelete:(show==3?props.onModalRenameAdd:props.onModalWDelete))}
           />: null}
       <DragDropContext onDragEnd={props.onDragEnd}>
         <ExtantTags
@@ -115,7 +124,7 @@ class TagModal extends React.Component{
             this.state.handleSave(this.state.tag, this.state.input);
             this.state.handleClose();
           }}>
-            {this.state.show==2?"Delete":(this.state.show==1?"Save":"Add")}
+            {(this.state.show==4||this.state.show==2)?"Delete":(this.state.show==1?"Save":"Add")}
           </Button>
         </Modal.Footer>
       </Modal>
@@ -188,7 +197,7 @@ function ExtantTopPanel(props){
           New
         </Badge>
         <input
-          type="text"  id="search" className="searchbar" value={props.addInput}
+          type="text"  id="exsearch" className={styles.searchbar} value={props.addInput}
           onChange={props.onAddInputChange}
           onKeyPress={props.onAddKeyPress}
         />
@@ -205,7 +214,7 @@ function WatsonTags(props){
       <Draggable key = {""+index} draggableId={"wS"+dTag._id} index={index}>
         {(provided) => (
           <li ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps}>
-            <span className="icon">
+            <span className={styles.icon}>
               <Icon icon={ICONS.BULLET} size="12" active={1}/>
             </span>
             <TagSplitButton
@@ -227,7 +236,7 @@ function WatsonTags(props){
       <Badge variant = "light"> Suggested tags </Badge>
       <Droppable droppableId="wstags" isDropDisabled={true}>
         {(provided) => (
-          <ul className="wslist" {...provided.droppableProps} ref={provided.innerRef}>
+          <ul className={styles.wslist} {...provided.droppableProps} ref={provided.innerRef}>
             {props.wRecs.map((el, index) => tagsToButton(el, (props.size + index)))}
           </ul>
         )}
@@ -252,7 +261,7 @@ function TagTree(props){
     <div>
       <Droppable droppableId="extantTree" isCombineEnabled={true}>
         {(provided) => (
-          <ul className="treelist" {...provided.droppableProps} ref={provided.innerRef}>
+          <ul className={styles.treelist} {...provided.droppableProps} ref={provided.innerRef}>
             {results}
             {provided.placeholder}
           </ul>
@@ -298,7 +307,7 @@ function TagTree(props){
           iconType={myTag.children.length ? (data.isCollapsed ? "collapsed" : "collapse") : "bullet"}
 
         />
-        <ul className="treelist">
+        <ul className={styles.treelist}>
           {myResults}
         </ul>
       </div>
@@ -311,8 +320,8 @@ function TagTreeNode(props){
   return(
     <Draggable key = {""+props.tag.index} draggableId={props.tag._id} index={props.tag.index}>
       {(provided) => (
-        <li className="customicon" ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps}>
-          <span className="icon" onClick={(e) => props.onCollapseClick(e, props.tag._id)}>
+        <li ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps}>
+          <span className={styles.icon} onClick={(e) => props.onCollapseClick(e, props.tag._id)}>
           {props.iconType == "collapsed" ? <ComplexIcon outter={ICONS.COLLAPSEDOUTTER} inner={ICONS.COLLAPSEDINNER} size="16" />
             : props.iconType == "collapse" ? <ComplexIcon outter={ICONS.COLLAPSEOUTTER} inner={ICONS.COLLAPSEINNER} size="16" />
             : <Icon icon={ICONS.BULLET} size="8" active={1}/>
@@ -362,7 +371,6 @@ function TagButton(props){
       onClick={(e)=>props.onClick(e, props.tag)}
       variant={props.variant+"-"+props.currentTheme}
       size="sm"
-      className={styles.tagbutton}
     > {props.tag.name} </Button>
   )
 }
