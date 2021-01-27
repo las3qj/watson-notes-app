@@ -31,7 +31,7 @@ export default function Home() {
           <>
             <h4> You're currently signed in as {""+session.user.email}!<br/> Continue to begin writing and organizing or sign out to view the demo.</h4>
             <Button variant="primary-2" href="/mainpage" size="lg"> Continue </Button>
-            <Button variant="success-2" size="lg" onClick={()=>signOut}> Sign out </Button>
+            <Button variant="success-2" size="lg" onClick={()=>signOut()}> Sign out </Button>
           </>
         )}
       </Jumbotron>
