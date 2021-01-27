@@ -10,14 +10,6 @@ const options = {
       clientSecret: process.env.GOOGLE_SECRET,
     }),
   ],
-  callbacks: {
-    redirect: async (url, _) => {
-      console.log(url);
-      if (url === '/api/auth/signin') {
-        return Promise.resolve('/mainpage');
-      }
-    },
-  },
   database: process.env.DATABASE_URL
 }
 
