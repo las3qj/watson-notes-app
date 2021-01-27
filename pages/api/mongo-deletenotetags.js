@@ -1,4 +1,5 @@
 import { runMiddleware, connect, sessionUserId } from "../../util/database";
+import Cors from 'cors';
 
 // Initializing the cors middleware
 const cors = Cors({

@@ -23,7 +23,7 @@ export default function Home() {
         {!session && (
           <>
             <h4> Sign in with Google for quick, easy access! <br/> Or check out the live demo to see some example notes. </h4>
-            <Button variant="primary-2" size="lg" onClick={signIn}> Sign in </Button>
+            <Button variant="primary-2" size="lg" onClick={signIn('google')}> Sign in </Button>
             <Button variant="success-2" size="lg" href="/mainpage"> Explore demo </Button>
           </>
         )}
