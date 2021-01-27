@@ -11,6 +11,11 @@ ul .btn {
   margin-top: 2px !important;
 }
 
+.jumbotron .btn{
+  margin-left: 15px;
+  margin-top: 10px;
+}
+
 blockquote {
   border-left: 1px solid #a3a3a3;
   padding-left: 8px;

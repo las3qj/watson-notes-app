@@ -1,4 +1,4 @@
-import { connect } from "../../util/database";
+import { runMiddleware, connect, sessionUserId } from "../../util/database";
 import Cors from 'cors'
 
 // Initializing the cors middleware
@@ -7,22 +7,9 @@ const cors = Cors({
   methods: ['GET', 'HEAD', 'POST'],
 })
 
-// Helper method to wait for a middleware to execute before continuing
-// And to throw an error when an error happens in a middleware
-function runMiddleware(req, res, fn) {
-  return new Promise((resolve, reject) => {
-    fn(req, res, (result) => {
-      if (result instanceof Error) {
-        return reject(result)
-      }
-
-      return resolve(result)
-    })
-  })
-}
-
 export default async (req, res) => {
   await runMiddleware(req,res,cors);
+  const userid = await sessionUserId(req);
   const { db } = await connect();
   const tagsDB = db.collection("notes");
   const tags = req.body.tags;
@@ -34,13 +21,14 @@ export default async (req, res) => {
   console.log("HERE");
   if(tags.length==1){
     query = {
+      userid: userid,
       tags: {
         $in: tags[0]
       }
     };
   }
   else{
-    var and = [];
+    var and = [{userid: userid}];
     for(var n=0; n<tags.length; n++){
       and.push({
         tags: {
