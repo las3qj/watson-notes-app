@@ -69,7 +69,7 @@ class MainController extends React.Component{
     const initialValue = [
       {
         type: 'paragraph',
-        children: []
+        children: [{ text: 'Enter some rich text..' }]
       }
     ];
     this.state= {
