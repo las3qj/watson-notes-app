@@ -53,7 +53,10 @@ class MainController extends React.Component{
     this.handleTagInputChange=this.handleTagInputChange.bind(this);
     this.handleSearchInputChange=this.handleSearchInputChange.bind(this);
     this.handleTagKeyPress=this.handleTagKeyPress.bind(this);
+    this.handleAddTagButton=this.handleAddTagButton.bind(this);
+    this.handleNewTagButton=this.handleNewTagButton.bind(this);
     this.handleSearchKeyPress=this.handleSearchKeyPress.bind(this);
+    this.handleSearchButtonPress=this.handleSearchButtonPress.bind(this);
     this.handleTagBarClick=this.handleTagBarClick.bind(this);
     this.handleETagClick=this.handleETagClick.bind(this);
     this.handleWTagClick=this.handleWTagClick.bind(this);
@@ -75,6 +78,7 @@ class MainController extends React.Component{
     this.state= {
       //input fields
       tagInput: "",
+      addInput: "",
       searchInput: "/All",
       initialValue: JSON.stringify(initialValue),
       note: {
@@ -620,7 +624,68 @@ class MainController extends React.Component{
     }
   }
 
-
+  async handleAddTagButton(event){
+    const input = this.state.tagInput.trim();
+    var tagsTable = this.state.tagsTable;
+    var nameToId = this.state.nameToId;
+    var rootTags = this.state.rootTags.slice();
+    var noteTags = this.state.note.tags.slice();
+    var key = caseInsensitiveSearch(input, nameToId);
+    if(typeof key === 'undefined'){
+        const path = specialCharacterParse(input);
+        //if path is only one string, insert as a root tag and add to note tags
+        if(path.length==1){
+          var newTag = {
+            _id: null,
+            name: input,
+            children: [],
+            parent: null
+          };
+          return handleInsertNewRootTag(newTag, tagsTable, rootTags, nameToId)
+          .then(newRoots => {
+            const nId = nameToId[input];
+            noteTags.push(nId);
+            this.setState({
+              tagInput: "",
+              note: Object.assign({}, this.state.note, {tags: noteTags, unsavedChanges: 1}),
+              tagsTable: tagsTable,
+              nameToId: nameToId,
+              rootTags: newRoots
+            });
+            return;
+          });
+        }
+        else{
+          return this.helperInsertPath(path, rootTags, null)
+          .then(res => {
+            var newRoots = res.roots;
+            var id = res.tagId;
+            var flag = (noteTags.findIndex(el => el == id)==-1);
+            if(flag){
+              noteTags.push(id);
+            }
+            this.setState({
+              tagInput: "",
+              note: Object.assign({}, this.state.note, {tags: noteTags, unsavedChanges: (flag?1:this.state.note.unsavedChanges)}),
+              tagsTable: tagsTable,
+              nameToId: nameToId,
+              rootTags: newRoots
+            });
+            return;
+          });
+        }
+    }
+    else{
+      if(noteTags.findIndex(el => el == nameToId[key])==-1){
+        noteTags.push(nameToId[key]);
+        this.setState({tagInput: "",note: Object.assign({}, this.state.note, {tags: noteTags, unsavedChanges: 1})});
+      }
+      else{
+        this.setState({tagInput: ""});
+      }
+      return;
+    }
+  }
   //currently very redundant with above--need to refactor mutual logic into helper call
   async handleAddKeyPress(event){
     //escapes this method if the key is not 'Enter'
@@ -628,6 +693,58 @@ class MainController extends React.Component{
       return;
     }
     const input = event.target.value.trim();
+    var tagsTable = this.state.tagsTable;
+    var nameToId = this.state.nameToId;
+    var rootTags = this.state.rootTags.slice();
+    var key = caseInsensitiveSearch(input, nameToId);
+    if(typeof key === 'undefined'){
+        const path = specialCharacterParse(input);
+        //if path is only one string, insert as a root tag and add to note tags
+        if(path.length==1){
+          var newTag = {
+            _id: null,
+            name: input,
+            children: [],
+            parent: null
+          };
+          return handleInsertNewRootTag(newTag, tagsTable, rootTags, nameToId)
+          .then(newRoots => {
+            this.setState({
+              addInput: "",
+              tagsTable: tagsTable,
+              nameToId: nameToId,
+              rootTags: newRoots
+            });
+            return;
+          });
+        }
+        else{
+          return this.helperInsertPath(path, rootTags, null)
+          .then(res => {
+            var newRoots = res.roots;
+            this.setState({
+              addInput: "",
+              tagsTable: tagsTable,
+              nameToId: nameToId,
+              rootTags: newRoots
+            });
+            return;
+          });
+        }
+    }
+    else{
+      if(noteTags.findIndex(el => el == nameToId[key])==-1){
+        this.setState({addInput: ""});
+      }
+      else{
+        this.setState({addInput: ""});
+      }
+      return;
+    }
+  }
+  //again with the redundancies mentioned above ^^
+  async handleNewTagButton(event){
+    const input = this.state.addInput.trim();
     var tagsTable = this.state.tagsTable;
     var nameToId = this.state.nameToId;
     var rootTags = this.state.rootTags.slice();
@@ -742,6 +859,12 @@ class MainController extends React.Component{
       return;
     }
     const input = event.target.value.trim();
+    const res = searchParse(input);
+    this.handleNoteSearch(res);
+  }
+  //handles search button press event
+  async handleSearchButtonPress(event){
+    const input = this.state.searchInput.trim();
     const res = searchParse(input);
     this.handleNoteSearch(res);
   }
@@ -1005,6 +1128,7 @@ class MainController extends React.Component{
               onNoteClick = {this.handleNoteSelectClick}
               onPin = {this.handlePinClick}
               onSearchInputChange = {this.handleSearchInputChange}
+              onSearchButton = {this.handleSearchButtonPress}
               onSearchKeyPress = {this.handleSearchKeyPress}
               showAlert = {this.state.searchAlert.showAlert}
               setShowAlert = {this.handleSetShowAlert}
@@ -1029,6 +1153,7 @@ class MainController extends React.Component{
                   onKeyPress = {this.handleTagKeyPress}
                   onTagInputChange = {this.handleTagInputChange}
                   tagBarOnClick = {this.handleTagBarClick}
+                  onTagButton = {this.handleAddTagButton}
                   handleNoteInputChange = {this.handleNoteInputChange}
                   handleDeleteNoteClick = {this.handleDeleteNoteClick}
                   handlePublishClick = {this.handlePublishClick}
@@ -1049,6 +1174,7 @@ class MainController extends React.Component{
                   addInput = {this.state.addInput}
                   onAddInputChange = {this.handleAddInputChange}
                   onAddKeyPress = {this.handleAddKeyPress}
+                  onNewTagButton = {this.handleNewTagButton}
                   onCollapseClick={this.handleCollapseClick}
                   onModalRename={this.handleModalRename}
                   onModalRenameAdd={this.handleModalRenameAdd}

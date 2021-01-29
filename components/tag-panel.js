@@ -63,6 +63,7 @@ export default function TagPanel(props){
           nameToId={props.nameToId}
           noteTags={props.noteTags}
           onAddInputChange={props.onAddInputChange}
+          onNewTagButton={props.onNewTagButton}
           onAddKeyPress={props.onAddKeyPress}
           addInput={props.addInput}
           onClick={props.onExClick}
@@ -171,6 +172,7 @@ function ExtantTags(props){
     <div className={styles.extags}>
       <ExtantTopPanel currentTheme={props.currentTheme}
         addInput={props.addInput}
+        onNewTagButton={props.onNewTagButton}
         onAddInputChange={props.onAddInputChange}
         onAddKeyPress={props.onAddKeyPress}
       />
@@ -193,9 +195,9 @@ function ExtantTopPanel(props){
     <div className={styles.tagtopbar}>
       <Badge variant="light"> My tags </Badge>
       <span>
-        <Badge variant={"primary-"+props.currentTheme}>
+        <Button variant="light" onClick={props.onNewTagButton}>
           New
-        </Badge>
+        </Button>
         <input
           type="text"  id="exsearch" className={styles.searchbar} value={props.addInput}
           onChange={props.onAddInputChange}

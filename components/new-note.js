@@ -15,6 +15,7 @@ export default function NewNote(props){
         id="1"
         onClick={props.tagBarOnClick}
         onKeyPress={props.onKeyPress}
+        onTagButton={props.onTagButton}
         tagsTable={props.tagsTable}
         onTagInputChange={props.onTagInputChange}
         tagInput={props.tagInput}
@@ -54,7 +55,7 @@ function TopBar(props){
   var ids = props.tags.slice();
   return(
     <div className={styles.topbar}>
-      <Badge variant="light"> Add tags </Badge>
+      <Button variant="light" onClick={props.onTagButton}> Add tags </Button>
       <input type="text" onChange={props.onTagInputChange} onKeyPress={props.onKeyPress} id="tags" className={styles.searchbar} value={props.tagInput}/>
       <ScrollBar ids={ids} currentTheme={props.currentTheme} tagsTable={props.tagsTable} onClick={props.onClick}/>
     </div>
