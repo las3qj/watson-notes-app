@@ -1364,7 +1364,7 @@ function handleSearchRecurseChildren(id, tagsTable){
 //returns a promise--whose value is the user's entire tag DB
 async function handleGetAllTags(sortType) {
   return fetch('/api/mongo-gettags', {
-    method: 'GET',
+    method: 'POST',
     headers: {
       'Content-Type': 'application/json'
     },
@@ -1373,7 +1373,7 @@ async function handleGetAllTags(sortType) {
 }
 async function handleGetAllNotes(sortType) {
   return fetch('/api/mongo-getallnotes', {
-    method: 'GET',
+    method: 'POST',
     headers: {
       'Content-Type': 'application/json'
     }
@@ -1381,7 +1381,7 @@ async function handleGetAllNotes(sortType) {
 }
 async function handleGetNoteFromTag(tag){
   return fetch('/api/mongo-getnotefromtag', {
-    method: 'GET',
+    method: 'POST',
     headers: {
       'Content-Type': 'application/json'
     },
@@ -1390,7 +1390,7 @@ async function handleGetNoteFromTag(tag){
 }
 async function handleGetNotesFromTags(tags){
   return fetch('/api/mongo-getnotefromtags', {
-    method: 'GET',
+    method: 'POST',
     headers: {
       'Content-Type': 'application/json'
     },
@@ -1460,7 +1460,7 @@ async function handleUpdateTagReq(newTag){
 //helper function for deleting tag from DB
 async function handleDeleteTagReq(tagId){
   return fetch('/api/mongo-deletetag', {
-    method: 'DELETE',
+    method: 'POST',
     headers: {
       'Content-Type': 'application/json'
     },
@@ -1469,7 +1469,7 @@ async function handleDeleteTagReq(tagId){
 }
 async function handleDeleteNoteTagReq(tagId){
   return fetch('/api/mongo-deletenotetags', {
-    method: 'DELETE',
+    method: 'POST',
     headers: {
       'Content-Type': 'application/json'
     },
