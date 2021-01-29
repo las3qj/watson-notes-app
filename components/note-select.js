@@ -27,7 +27,7 @@ export default function NoteSelect(props){
 function TopBar(props){
   return(
     <div className={styles.topbar}>
-      <Button variant={"primary-"+props.currentTheme} onClick={props.onSearchButton}> Search </Button>
+      <Button variant={"primary-"+props.currentTheme} size="sm" onClick={props.onSearchButton}> Search </Button>
       <input
         type="text"  id="selsearch" className={styles.searchbar} value={props.searchInput}
         onChange={props.onInputChange} onKeyPress={props.onKeyPress}

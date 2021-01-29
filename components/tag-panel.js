@@ -195,7 +195,7 @@ function ExtantTopPanel(props){
     <div className={styles.tagtopbar}>
       <Badge variant="light"> My tags </Badge>
       <span>
-        <Button variant={"primary-"+props.currentTheme} onClick={props.onNewTagButton}>
+        <Button variant={"primary-"+props.currentTheme} size="sm" onClick={props.onNewTagButton}>
           New
         </Button>
         <input
