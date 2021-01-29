@@ -86,8 +86,8 @@ function BottomBar(props){
   return(
     <div className={styles.buttonbar}>
       <Button variant={"primary-"+props.currentTheme} onClick={props.handleSaveClick} disabled={!props.unsavedChanges}> Save changes </Button>
+      <Button variant={"success-"+props.currentTheme} onClick={props.handleDeleteClick} disabled={!props.isNoteNew}> Delete note </Button>
       <Button variant="secondary" onClick={props.handleNewNoteClick}> New note </Button>
-      <Button variant={"success-"+props.currentTheme} onClick={props.handleDeleteClick} disabled={props.isNoteNew}> Delete note </Button>
       <Button variant={"primary-"+props.currentTheme} onClick={props.publishOnClick}> Get suggestions </Button>
     </div>
   )
