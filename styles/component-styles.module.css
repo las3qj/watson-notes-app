@@ -106,21 +106,6 @@
   height: 100%;
 }
 
-.topbar {
-  width: 100%;
-  height:10%;
-  display: flex;
-  justify-content: left;
-  border: 1px solid black;
-  align-items: center;
-}
-
-.topbar .btn {
-  margin-left: 3px !important;
-  margin-right: 5px !important;
-  width: auto !important;
-}
-
 .notelist {
   width: 100%;
   height: 90%;
