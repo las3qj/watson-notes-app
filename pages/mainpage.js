@@ -69,7 +69,7 @@ class MainController extends React.Component{
     const initialValue = [
       {
         type: 'paragraph',
-        children: [{ text: 'Enter some rich text..' }]
+        children: [{ text: '' }]
       }
     ];
     this.state= {
@@ -297,7 +297,6 @@ class MainController extends React.Component{
       this.pushNoteToDB();
       return;
     }
-    console.log(this.state.note.content);
     var curNotes = this.state.curNotes.slice();
     var pins = this.state.pins.slice();
     const id = this.state.note._id;
