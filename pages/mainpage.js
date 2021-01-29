@@ -297,6 +297,7 @@ class MainController extends React.Component{
       this.pushNoteToDB();
       return;
     }
+    console.log(this.state.note.content);
     var curNotes = this.state.curNotes.slice();
     var pins = this.state.pins.slice();
     const id = this.state.note._id;
@@ -346,7 +347,6 @@ class MainController extends React.Component{
       wRecs: [],
       unsavedChanges: 0
     };
-    console.log(this.state.initialValue);
     var pins = this.state.pins.slice();
     var curNotes = this.state.curNotes.slice();
     if(this.state.note._id!=null){
