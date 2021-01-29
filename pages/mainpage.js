@@ -45,6 +45,7 @@ class MainController extends React.Component{
     this.handleSetShowAlert=this.handleSetShowAlert.bind(this);
     this.handleNoteSelectClick=this.handleNoteSelectClick.bind(this);
     this.handlePublishClick=this.handlePublishClick.bind(this);
+    this.handleDeleteNoteClick=this.handleDeleteNoteClick.bind(this);
     this.handleSaveClick=this.handleSaveClick.bind(this);
     this.handleNewNoteClick=this.handleNewNoteClick.bind(this);
     this.handleCollapseClick=this.handleCollapseClick.bind(this);
@@ -361,6 +362,31 @@ class MainController extends React.Component{
       }
     }
     this.setState({note: newNote, pins: pins, curNotes:curNotes});
+  }
+  //when the delete note button is clicked
+  //(deletes the note from DB, from curNotes/pins, opens new note)
+  handleDeleteNoteClick(event){
+    const curNote = this.state.note;
+    var newPins = this.state.pins.slice();
+    var newNotes = this.state.curNotes.slice();
+    handleResetMatches(this.state.tagsTable, this.state.nameToId, this.state.note.tags, this.state.note.wRecs);
+    if(curNote.isPinned){
+      const pI = newPins.findIndex(el => el._id == curNote._id);
+      newPins.splice(pI, 1);
+    }
+    else{
+      const cI = newNotes.findIndex(el => el._id == curNote._id);
+      newNotes.splice(cI, 1);
+    }
+    var newNote = {
+      _id: null,
+      content: this.state.initialValue,
+      tags: [],
+      wRecs: [],
+      unsavedChanges: 0
+    };
+    handleDeleteNoteReq(this.state.note._id);
+    this.setState({pins: newPins, curNotes: newNotes, note: newNote});
   }
   //when the publish botton is clicked (analyzes and pushes a note to DB)
   async handlePublishClick(event){
@@ -1010,6 +1036,7 @@ class MainController extends React.Component{
                   onTagInputChange = {this.handleTagInputChange}
                   tagBarOnClick = {this.handleTagBarClick}
                   handleNoteInputChange = {this.handleNoteInputChange}
+                  handleDeleteNoteClick = {this.handleDeleteNoteClick}
                   handlePublishClick = {this.handlePublishClick}
                   handleSaveClick = {this.handleSaveClick}
                   handleNewNoteClick = {this.handleNewNoteClick}
@@ -1474,6 +1501,15 @@ async function handleDeleteNoteTagReq(tagId){
       'Content-Type': 'application/json'
     },
     body: JSON.stringify({_id: tagId})
+  });
+}
+async function handleDeleteNoteReq(noteId){
+  return fetch('api/mongo-deletenote', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({_id: noteId})
   });
 }
 
