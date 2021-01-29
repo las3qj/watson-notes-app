@@ -214,7 +214,6 @@ class MainController extends React.Component{
     });
   }
   handleModalDelete(oldTag){
-    console.log(oldTag);
     var newRoots = handleDeleteTag(oldTag._id, this.state.tagsTable,
       this.state.rootTags.slice(), this.state.nameToId);
     var res = handleDeleteNoteTagRefs(oldTag._id, this.state.curNotes.slice(), this.state.pins.slice());
@@ -231,7 +230,6 @@ class MainController extends React.Component{
     });
   }
   handleModalWDelete(oldWRec){
-    console.log(oldWRec);
     var newWRecs = this.state.note.wRecs.slice();
     const ind = newWRecs.findIndex(el => el._id == oldWRec.name);
     newWRecs.splice(ind, 1);
@@ -341,7 +339,6 @@ class MainController extends React.Component{
   //when the new note button is clicked
   handleNewNoteClick(event){
     handleResetMatches(this.state.tagsTable, this.state.nameToId, this.state.note.tags, this.state.note.wRecs);
-    console.log(this.state.initialValue);
     var newNote = {
       _id: null,
       content: this.state.initialValue,
@@ -349,6 +346,7 @@ class MainController extends React.Component{
       wRecs: [],
       unsavedChanges: 0
     };
+    console.log(this.state.initialValue);
     var pins = this.state.pins.slice();
     var curNotes = this.state.curNotes.slice();
     if(this.state.note._id!=null){
@@ -445,7 +443,6 @@ class MainController extends React.Component{
   }
   //when a new note is clicked/selected from note-select
   handleNoteSelectClick(event, note){
-    console.log("beginning");
     if(note.isActive){
       return;
     }
@@ -477,7 +474,6 @@ class MainController extends React.Component{
       curNotes: curNotes,
       pins: pins
     });
-    console.log("ended");
   }
   //when a tag button in the tag bar is clicked
   handleTagBarClick(event, tag){
@@ -943,7 +939,6 @@ class MainController extends React.Component{
       }
     }
     else{
-      console.log(result);
       if(!result.destination){
         return;
       }
@@ -1114,7 +1109,6 @@ function handleMoveTag(draggedTagID, targetTagID, tagsTable, rootTags){
 //or children fields of other tags, updates their DB entries, but not the entry of draggedTag
 function handleRemoveTagRefs(draggedTagID, tagsTable, rootTags, fromDelete=0){
   const draggedTag = tagsTable[draggedTagID];
-  console.log("dTag: ",draggedTag);
   //for every child, updating parent to be the draggedTag's parent
   //if not collapsed, that is (or if fromDelete)
   var newChildren = [];

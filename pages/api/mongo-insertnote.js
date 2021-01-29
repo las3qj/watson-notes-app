@@ -33,7 +33,6 @@ export default async (req, res) => {
         resolve();
       })
       .catch(err => {
-        console.log('Mongo error: ', err);
         res.json(err);
         return resolve();
       });

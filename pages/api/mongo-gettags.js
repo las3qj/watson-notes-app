@@ -12,7 +12,6 @@ export default async (req, res) => {
 
   const { db } = await connect();
   const userid = await sessionUserId(req);
-  console.log("in gettags: ", userid);
   const tagsDB = db.collection("tags");
   const query = {userid: userid};
   const sBy = req.body;

@@ -30,8 +30,6 @@ export default async (req, res) => {
       wRecs: wRecs
     }
   };
-  console.log("q: ",query);
-  console.log("u: ", update);
   return new Promise((resolve, reject) => {
     tagsDB.updateOne(query, update)
       .then(response => {

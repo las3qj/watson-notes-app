@@ -24,7 +24,6 @@ export default async (req, res) => {
     }
   };
   const options = {multi: 'true'};
-  console.log("u: ", update);
   return new Promise((resolve, reject) => {
     tagsDB.updateMany(query, update, options)
       .then(response => {

@@ -18,7 +18,6 @@ export default async (req, res) => {
   //the find returns all notes that match 1 tag from every tags[i] array
   //the tags in tags[i] are "or'd", the arrays tags[n], tags[m] are "and'd"
   var query;
-  console.log("HERE");
   if(tags.length==1){
     query = {
       userid: userid,
@@ -39,7 +38,6 @@ export default async (req, res) => {
     query = {
       $and: and
     };
-    console.log(query);
   }
   const options = {};
 

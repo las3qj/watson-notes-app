@@ -24,15 +24,12 @@ export default async (req, res) => {
     children: children,
     parent: parent
   };
-  console.log(doc);
 
   return new Promise((resolve, reject) => {
     tagsDB.insertOne(doc)
       .then(response => {
         res.statusCode = 200;
-        console.log("start");
         res.json(objid);
-        console.log("Success");
         resolve();
       })
       .catch(err => {
