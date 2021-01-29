@@ -55,7 +55,7 @@ function TopBar(props){
   var ids = props.tags.slice();
   return(
     <div className={styles.topbar}>
-      <Button variant="light" onClick={props.onTagButton}> Add tags </Button>
+      <Button variant={"primary-"+props.currentTheme} onClick={props.onTagButton}> Add tags </Button>
       <input type="text" onChange={props.onTagInputChange} onKeyPress={props.onKeyPress} id="tags" className={styles.searchbar} value={props.tagInput}/>
       <ScrollBar ids={ids} currentTheme={props.currentTheme} tagsTable={props.tagsTable} onClick={props.onClick}/>
     </div>
