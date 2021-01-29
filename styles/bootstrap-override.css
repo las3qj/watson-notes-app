@@ -15,7 +15,7 @@
   align-items: center;
 }
 
-.topbar btn {
+.topbar .btn {
   margin-left: 3px !important;
   margin-right: 5px !important;
   width: auto !important;
