@@ -12,7 +12,7 @@ export default async (req, res) => {
   const userid = await sessionUserId(req);
   if(userid == "demo"){
     return new Promise((resolve, reject) => {
-      res.json("demo");
+      res.json({"demo"});
       resolve();
     });
   }
