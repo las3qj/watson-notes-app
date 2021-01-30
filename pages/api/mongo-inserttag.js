@@ -10,9 +10,11 @@ const cors = Cors({
 export default async (req, res) => {
   await runMiddleware(req,res,cors);
   const userid = await sessionUserId(req);
+  var ObjectId = require('mongodb').ObjectId;
+  const objid = new ObjectId();
   if(userid == "demo"){
     return new Promise((resolve, reject) => {
-      res.json(userid);
+      res.json(objid);
       resolve();
     });
   }
@@ -20,8 +22,6 @@ export default async (req, res) => {
   const tagsDB = db.collection("tags");
   const children = req.body.children;
   const parent = req.body.parent;
-  var ObjectId = require('mongodb').ObjectId;
-  const objid = new ObjectId();
   const name = req.body.name;
   const doc = {
     _id: objid,
