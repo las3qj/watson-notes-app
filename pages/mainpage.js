@@ -433,6 +433,7 @@ class MainController extends React.Component{
     .then(res => res.json())
     .then(_id => {
       if(_id === "demo"){
+        console.log("demo insert: ", _id);
         newNote = Object.assign({}, newNote, {_id: _id+""+randomNumber(), isActive: true});
       }
       else{
@@ -1295,6 +1296,7 @@ async function handleInsertNewSubTag(newTag, targetTagID, tagsTable, rootTags, n
     .then(re => re.json())
     .then(_id => {
       if(_id === "demo"){
+        console.log("demo insert: ", _id);
         var updTag = Object.assign({}, newTag, {_id: (_id+""+randomNumber())});
       }
       else{
@@ -1326,6 +1328,7 @@ async function handleInsertNewRootTag(newTag, tagsTable, rootTags, nameToId){
   .then(res => res.json())
   .then(_id => {
     if(_id === "demo"){
+      console.log("demo insert: ", _id);
       newTag._id = (_id+""+randomNumber());
     }
     else{
