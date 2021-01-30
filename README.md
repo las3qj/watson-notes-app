@@ -10,6 +10,10 @@ Watson Notes App is a web application where users can sign in with their google 
 
 ## Quick feature overview
 
+### Easy, secure login with Google
+
+Requesting almost none of your account information (besides email, name, and profile picture) Watson Notes App has a quick Google sign-in / authentication. You can get started writing notes immediately! Or check out the demo to see Watson Notes without signing in.
+
 ### The rich text editor
 
 Watson Notes App's rich text editor was built using the Slate framework (https://github.com/ianstormtaylor/slate/tree/master/packages/slate-react) and comes with every tool the dedicated note taker may require, from text formatting to history tracking!
