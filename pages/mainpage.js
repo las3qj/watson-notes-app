@@ -432,7 +432,12 @@ class MainController extends React.Component{
     handleInsertNote(newNote)
     .then(res => res.json())
     .then(_id => {
-      newNote = Object.assign({}, newNote, {_id: _id, isActive: true});
+      if(_id === "demo"){
+        newNote = Object.assign({}, newNote, {_id: _id+""+randomNumber(), isActive: true});
+      }
+      else{
+        newNote = Object.assign({}, newNote, {_id: _id, isActive: true});
+      }
       var cNotes = this.state.curNotes.slice();
       //checks current note against current query
       if(handleCheckAgainstQuery(newNote.tags, this.state.curQuery)){
@@ -1289,7 +1294,12 @@ async function handleInsertNewSubTag(newTag, targetTagID, tagsTable, rootTags, n
     return handleInsertTagReq(newTag)
     .then(re => re.json())
     .then(_id => {
-      var updTag = Object.assign({}, newTag, {_id: _id});
+      if(_id === "demo"){
+        var updTag = Object.assign({}, newTag, {_id: (_id+""+randomNumber())});
+      }
+      else{
+        var updTag = Object.assign({}, newTag, {_id: _id});
+      }
       insertNewSubTag(updTag, targetTagID, tagsTable, nameToId);
       var target = tagsTable[targetTagID];
       handleUpdateTagReq(target);
@@ -1315,7 +1325,12 @@ async function handleInsertNewRootTag(newTag, tagsTable, rootTags, nameToId){
   return handleInsertTagReq(newTag)
   .then(res => res.json())
   .then(_id => {
-    newTag._id = _id;
+    if(_id === "demo"){
+      newTag._id = (_id+""+randomNumber());
+    }
+    else{
+      newTag._id = _id;
+    }
     tagsTable[_id] = newTag;
     tagsTable.size = tagsTable.size+1;
     nameToId[newTag.name] = _id;
@@ -1630,6 +1645,9 @@ async function handleDeleteNoteReq(noteId){
     },
     body: JSON.stringify({_id: noteId})
   });
+}
+function randomNumber(){
+  return Math.floor(Math.random() * 1000);
 }
 
 export default MainController;

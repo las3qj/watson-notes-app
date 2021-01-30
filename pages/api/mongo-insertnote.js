@@ -10,6 +10,12 @@ const cors = Cors({
 export default async (req, res) => {
   await runMiddleware(req,res,cors);
   const userid = await sessionUserId(req);
+  if(userid == "demo"){
+    return new Promise((resolve, reject) => {
+      res.json("demo");
+      resolve();
+    });
+  }
   const { db } = await connect();
   const notes = db.collection("notes");
   const cont = req.body.content;

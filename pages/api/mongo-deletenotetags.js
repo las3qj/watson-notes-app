@@ -10,7 +10,12 @@ const cors = Cors({
 export default async (req, res) => {
   await runMiddleware(req, res, cors);
   const userid = await sessionUserId(req);
-
+  if(userid == "demo"){
+    return new Promise((resolve, reject) => {
+      res.end();
+      resolve();
+    });
+  }
   const { db } = await connect();
   const tagsDB = db.collection("notes");
   var ObjectId = require('mongodb').ObjectId;
