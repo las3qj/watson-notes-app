@@ -88,6 +88,7 @@ class MainController extends React.Component{
         wRecs: [],
         unsavedChanges: 0
       },
+      resetValue: false,
       tagsTable: {size:0},
       nameToId: {},
       rootTags: [],
@@ -141,7 +142,8 @@ class MainController extends React.Component{
       note: Object.assign({}, this.state.note, {
         content: value,
         unsavedChanges: 1
-      })
+      }),
+      resetValue: false
     });
   }
   //change of input in the add tag text fields
@@ -362,7 +364,7 @@ class MainController extends React.Component{
         curNotes[qInd] = Object.assign({}, curNotes[qInd], {isActive:0});
       }
     }
-    this.setState({note: newNote, pins: pins, curNotes:curNotes});
+    this.setState({note: newNote, pins: pins, curNotes:curNotes, resetValue: true});
   }
   //when the delete note button is clicked
   //(deletes the note from DB, from curNotes/pins, opens new note)
@@ -489,7 +491,8 @@ class MainController extends React.Component{
     tagsTable[tag._id].noteTagMatch = 0;
     this.setState({
       note: Object.assign({}, this.state.note, {tags: tags, unsavedChanges: 1}),
-      tagsTable: tagsTable
+      tagsTable: tagsTable,
+      resetValue: true
     });
   }
   //when an extant tag button is clicked in tag-panel
@@ -1150,6 +1153,7 @@ class MainController extends React.Component{
                   tagInput = {this.state.tagInput}
                   tagsTable = {this.state.tagsTable}
                   note = {this.state.note}
+                  resetValue = {this.state.resetValue}
                   onKeyPress = {this.handleTagKeyPress}
                   onTagInputChange = {this.handleTagInputChange}
                   tagBarOnClick = {this.handleTagBarClick}

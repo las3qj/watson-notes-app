@@ -53,6 +53,9 @@ export default function SlateNoteEditor(props){
   const renderLeaf = useCallback(props => <Leaf {...props} />, []);
   const editor = useMemo(() => withShortcuts(withHistory(withReact(createEditor()))), []);
 
+  if(props.resetValue){
+    editor.selection = { anchor: { path: [0,0], offset:0 }, focus: { path: [0,0], offset: 0 } };
+  }
   return(
     <Slate
       editor={editor}

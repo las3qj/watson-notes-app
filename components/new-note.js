@@ -26,6 +26,7 @@ export default function NewNote(props){
         onInputChange={value => props.handleNoteInputChange(value)}
         content={props.note.content}
         onSave={props.handleSaveClick}
+        resetValue={props.resetValue}
       />
       <BottomBar
         unsavedChanges = {props.note.unsavedChanges}
