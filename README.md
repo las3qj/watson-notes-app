@@ -8,6 +8,8 @@ https://watson-notes-app.vercel.app
 
 Watson Notes App is a web application where users can sign in with their google account, compose notes with a fully-built rich text editor, tag them with your own tags (and some tags from Watson NLU!), and search your database when you need to review!
 
+## Quick feature overview
+
 ### The rich text editor
 
 Watson Notes App's rich text editor was built using the Slate framework (https://github.com/ianstormtaylor/slate/tree/master/packages/slate-react) and comes with every tool the dedicated note taker may require, from text formatting to history tracking!
