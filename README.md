@@ -14,7 +14,7 @@ Watson Notes App's rich text editor was built using the Slate framework (https:/
 
 ### The tag system
 
-Watson Notes App offers a flexible tag system allowing users to build nested trees of tags with which to connect and cross-reference their notes. Need help coming up with tags? Ask Watson for tag suggestions and receive up to 30 keywords, concepts, and entities relevant to your note!
+Watson Notes App offers a flexible tag system allowing users to build nested trees of tags with which to connect and cross-reference their notes. Need help coming up with tags? Ask Watson for tag suggestions and receive up to 30 keywords, concepts, and entities relevant to your note! (Don't forget that tags are drag-and-droppable! Thanks to the Beatiful-DnD library: https://github.com/atlassian/react-beautiful-dnd )
 
 ### Searching your notes
 
